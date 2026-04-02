@@ -1,0 +1,1888 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yao-Manager — Famille Yao</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --bg:#faf8f3;--bg2:#f5f1e8;--bg3:#ede8d8;
+  --surface:#ffffff;--surface2:#fdfbf6;
+  --border:rgba(180,150,60,.13);--border2:rgba(180,150,60,.28);--border3:rgba(180,150,60,.5);
+  --gold:#b8960c;--gold2:#c9a820;--gold3:#ddb93a;
+  --gold-dim:rgba(184,150,12,.07);--gold-glow:rgba(184,150,12,.18);--gold-glow2:rgba(184,150,12,.32);
+  --text:#1a1710;--text2:#5a5340;--muted:#9a8e72;
+  --green:#16a34a;--green-bg:rgba(22,163,74,.08);--green-dim:rgba(22,163,74,.05);
+  --red:#dc2626;--red-bg:rgba(220,38,38,.08);--red-dim:rgba(220,38,38,.05);
+  --blue:#2563eb;--blue-bg:rgba(37,99,235,.08);
+  --radius:12px;--radius2:16px;--radius3:22px;
+  --sh:0 2px 12px rgba(0,0,0,.06);--sh-lg:0 8px 40px rgba(0,0,0,.1);--sh-gold:0 0 40px rgba(184,150,12,.07);
+  --topbar-h:60px;--nav-h:48px;--tr:.22s cubic-bezier(.16,1,.3,1);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased;}
+
+/* ── LOADER ── */
+#loader{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column;gap:20px;transition:opacity .6s ease,transform .6s ease;}
+#loader.hide{opacity:0;transform:scale(1.04);pointer-events:none;}
+.ld-crest{width:72px;height:72px;border:1.5px solid var(--border2);border-radius:50%;display:flex;align-items:center;justify-content:center;animation:crestPulse 2s ease infinite;background:var(--surface);box-shadow:var(--sh-gold);}
+@keyframes crestPulse{0%,100%{box-shadow:0 0 0 0 var(--gold-glow)}50%{box-shadow:0 0 28px 10px var(--gold-dim)}}
+.ld-monogram{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--gold2);letter-spacing:.08em;}
+.ld-title{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:700;color:var(--text);letter-spacing:.04em;}
+.ld-title em{color:var(--gold2);font-style:italic;}
+.ld-sub{font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:var(--muted);font-weight:500;}
+.ld-bar{width:90px;height:1px;background:var(--border);border-radius:1px;overflow:hidden;}
+.ld-bar-fill{height:100%;width:0;background:linear-gradient(90deg,var(--gold),var(--gold3));animation:ldFill 1.5s ease forwards;}
+@keyframes ldFill{to{width:100%}}
+
+/* ── SKELETON ── */
+.skel{background:linear-gradient(90deg,var(--bg2) 25%,var(--bg3) 50%,var(--bg2) 75%);background-size:200% 100%;animation:skelShimmer 1.4s ease infinite;border-radius:6px;}
+@keyframes skelShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skel-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius2);padding:22px;overflow:hidden;}
+.skel-line{height:12px;margin-bottom:10px;}
+.skel-line.w100{width:100%}.skel-line.w80{width:80%}.skel-line.w60{width:60%}.skel-line.w40{width:40%}
+.skel-amount{height:48px;width:55%;margin-bottom:14px;}
+.skel-biz{height:180px;border-radius:var(--radius2);}
+
+/* ── PAGE LAYOUT ── */
+.page{display:none;min-height:100vh;}
+.page.active{display:block;}
+#page-login{display:none;min-height:100vh;}
+#page-login.active{display:flex;align-items:center;justify-content:center;}
+#page-login{background:var(--bg);position:relative;overflow:hidden;}
+#page-login::before{content:'';position:absolute;top:-300px;right:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(184,150,12,.04) 0%,transparent 65%);pointer-events:none;}
+#page-login::after{content:'';position:absolute;bottom:-200px;left:-150px;width:500px;height:500px;background:radial-gradient(circle,rgba(184,150,12,.03) 0%,transparent 65%);pointer-events:none;}
+
+/* ── LOGIN ── */
+.login-wrap{width:100%;max-width:420px;margin:24px;z-index:1;animation:fadeUp .55s ease both;}
+.login-brand{text-align:center;margin-bottom:40px;}
+.brand-emblem{display:inline-flex;align-items:center;justify-content:center;width:68px;height:68px;border:1.5px solid var(--border2);border-radius:50%;margin-bottom:16px;background:var(--surface);box-shadow:var(--sh-gold);}
+.brand-name{font-family:'Cormorant Garamond',serif;font-size:34px;font-weight:700;color:var(--text);letter-spacing:.02em;}
+.brand-name em{color:var(--gold2);font-style:italic;}
+.brand-tag{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin-top:6px;font-weight:500;}
+.ornament{display:flex;align-items:center;gap:12px;margin-bottom:28px;}
+.ornament-line{flex:1;height:1px;background:var(--border);}
+.ornament-gem{width:5px;height:5px;background:var(--gold);transform:rotate(45deg);flex-shrink:0;}
+.login-card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius3);padding:38px 34px;box-shadow:var(--sh-lg),var(--sh-gold);position:relative;overflow:hidden;}
+.login-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold2),transparent);}
+.login-card-ttl{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--text);margin-bottom:26px;letter-spacing:.02em;}
+
+/* ── FORM ── */
+.fg{margin-bottom:18px;}
+.fg label{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+.fg input,.fg select,.fg textarea{width:100%;padding:12px 15px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Outfit',sans-serif;font-size:14px;transition:border-color var(--tr),box-shadow var(--tr);outline:none;}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-dim);}
+.fg input::placeholder,.fg textarea::placeholder{color:var(--muted);}
+.fg select{cursor:pointer;appearance:none;}
+.fg select option{background:var(--surface);}
+
+/* ── BUTTONS ── */
+.btn-primary{width:100%;padding:14px;background:var(--gold);color:#fff;font-family:'Outfit',sans-serif;font-weight:700;font-size:11px;letter-spacing:.16em;text-transform:uppercase;border:none;border-radius:10px;cursor:pointer;transition:all var(--tr);}
+.btn-primary:hover{background:var(--gold2);box-shadow:0 6px 28px var(--gold-glow2);}
+.btn-primary:active{transform:scale(.98);}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;}
+.btn-add{display:inline-flex;align-items:center;gap:7px;background:var(--gold);color:#fff;font-family:'Outfit',sans-serif;font-weight:700;font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:9px 17px;border-radius:9px;border:none;cursor:pointer;transition:all var(--tr);white-space:nowrap;flex-shrink:0;}
+.btn-add:hover{background:var(--gold2);box-shadow:0 5px 22px var(--gold-glow2);}
+.btn-add:active{transform:scale(.97);}
+.btn-sm{display:inline-flex;align-items:center;gap:4px;background:var(--bg2);border:1px solid var(--border);color:var(--muted);padding:6px 11px;border-radius:7px;cursor:pointer;font-size:10px;font-family:'Outfit',sans-serif;font-weight:600;letter-spacing:.06em;text-transform:uppercase;transition:all var(--tr);}
+.btn-sm:hover{border-color:var(--gold);color:var(--gold);}
+.btn-sm.danger:hover{border-color:var(--red);color:var(--red);}
+.btn-sm.info:hover{border-color:var(--blue);color:var(--blue);}
+.btn-out{display:flex;align-items:center;gap:5px;background:none;border:1px solid var(--border);color:var(--muted);padding:6px 12px;border-radius:7px;cursor:pointer;font-size:10px;font-family:'Outfit',sans-serif;font-weight:600;letter-spacing:.08em;text-transform:uppercase;transition:all var(--tr);}
+.btn-out:hover{border-color:var(--red);color:var(--red);}
+
+.err-box{background:var(--red-dim);border:1px solid rgba(220,38,38,.18);color:var(--red);padding:10px 13px;border-radius:8px;font-size:12px;margin-top:12px;display:none;align-items:center;gap:7px;}
+.err-box.show{display:flex;}
+.session-banner{position:fixed;top:0;left:0;right:0;z-index:9000;background:var(--red);color:#fff;padding:12px 24px;font-size:13px;font-weight:600;display:none;align-items:center;justify-content:space-between;gap:12px;}
+.session-banner.show{display:flex;}
+.session-banner button{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 14px;border-radius:6px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;}
+
+/* ── TOPBAR / NAV ── */
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 26px;height:var(--topbar-h);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 1px 16px rgba(0,0,0,.05);}
+.tb-logo{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:10px;letter-spacing:.02em;}
+.tb-logo em{color:var(--gold2);font-style:italic;}
+.tb-badge{font-size:9px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);background:var(--gold-dim);border:1px solid var(--border2);padding:2px 9px;border-radius:100px;font-family:'Outfit',sans-serif;}
+.tb-right{display:flex;align-items:center;gap:8px;}
+.tb-user{display:flex;align-items:center;gap:8px;padding:5px 12px 5px 5px;border-radius:100px;border:1px solid var(--border);background:var(--bg2);cursor:pointer;transition:all var(--tr);}
+.tb-user:hover{border-color:var(--border2);}
+.tb-avatar{width:28px;height:28px;background:var(--gold-dim);border:1.5px solid var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:13px;font-weight:700;color:var(--gold);flex-shrink:0;}
+.tb-name{font-size:12px;color:var(--text2);font-weight:500;}
+.nav-tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);padding:0 26px;overflow-x:auto;scrollbar-width:none;position:sticky;top:var(--topbar-h);z-index:190;}
+.nav-tabs::-webkit-scrollbar{display:none;}
+.nav-tab{padding:0 18px;height:var(--nav-h);font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all var(--tr);display:flex;align-items:center;gap:7px;white-space:nowrap;flex-shrink:0;}
+.nav-tab:hover{color:var(--text2);}
+.nav-tab.active{color:var(--gold);border-bottom-color:var(--gold);}
+
+/* ── CONTENT ── */
+.content{padding:28px 26px;max-width:1100px;margin:0 auto;}
+
+/* ── TOTAL CARD ── */
+.total-card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius3);padding:32px 38px;margin-bottom:26px;position:relative;overflow:hidden;animation:fadeUp .5s ease both;box-shadow:var(--sh-gold);}
+.total-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold2),transparent);}
+.total-card::after{content:'';position:absolute;top:-100px;right:-100px;width:320px;height:320px;background:radial-gradient(circle,rgba(184,150,12,.045) 0%,transparent 65%);pointer-events:none;}
+.total-eyebrow{display:flex;align-items:center;gap:7px;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;font-weight:600;}
+.total-dot{width:5px;height:5px;background:var(--gold);border-radius:50%;animation:dotBlink 2s ease infinite;}
+@keyframes dotBlink{0%,100%{opacity:1}50%{opacity:.3}}
+.total-amount{font-family:'Cormorant Garamond',serif;font-size:52px;font-weight:700;color:var(--text);line-height:1;letter-spacing:.01em;transition:all .3s ease;}
+.total-meta{display:flex;align-items:center;gap:10px;margin-top:16px;flex-wrap:wrap;}
+.total-chip{display:flex;align-items:center;gap:5px;background:var(--bg2);border:1px solid var(--border);border-radius:100px;padding:4px 12px;font-size:11px;color:var(--muted);}
+.dash-chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius2);padding:22px 24px;margin-bottom:26px;animation:fadeUp .5s .08s ease both;}
+
+/* ── SEC HD ── */
+.sec-hd{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
+.sec-hd-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--text);white-space:nowrap;letter-spacing:.02em;}
+.sec-hd-line{flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent);}
+
+/* ── BIZ CARDS ── */
+.biz-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px;}
+.biz-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius2);cursor:pointer;transition:all var(--tr);position:relative;overflow:hidden;animation:cardIn .45s ease both;display:flex;flex-direction:column;}
+@keyframes cardIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.biz-card:hover{border-color:var(--border3);transform:translateY(-4px);box-shadow:var(--sh-lg),var(--sh-gold);}
+.biz-card-accent{height:3px;width:100%;flex-shrink:0;}
+.biz-card-body{padding:22px 22px 18px;}
+.biz-card-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;}
+.biz-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.biz-card-actions{display:flex;gap:5px;opacity:0;transition:opacity var(--tr);}
+.biz-card:hover .biz-card-actions{opacity:1;}
+.biz-btn{width:28px;height:28px;border-radius:7px;border:1px solid var(--border);background:var(--bg2);display:flex;align-items:center;justify-content:center;transition:all var(--tr);flex-shrink:0;cursor:pointer;}
+.biz-btn:hover{border-color:var(--gold);background:var(--gold-dim);}
+.biz-btn.del:hover{border-color:var(--red);background:var(--red-dim);}
+.biz-btn.eye:hover{border-color:var(--blue);background:var(--blue-bg);}
+.biz-name{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:var(--text);margin-bottom:3px;letter-spacing:.01em;}
+.biz-desc{font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.5;}
+.biz-sep{height:1px;background:var(--border);margin-bottom:13px;}
+.biz-solde-lbl{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;font-weight:600;}
+.biz-solde{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:var(--green);}
+.biz-solde.neg{color:var(--red);}
+.biz-footer{display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+.trend{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px;}
+.trend.up{color:var(--green);background:var(--green-bg);}
+.trend.down{color:var(--red);background:var(--red-bg);}
+.trend.flat{color:var(--muted);background:var(--bg2);}
+
+/* ── DETAIL ── */
+.btn-back{display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:var(--muted);font-size:10px;cursor:pointer;margin-bottom:22px;padding:0;font-family:'Outfit',sans-serif;font-weight:600;letter-spacing:.09em;text-transform:uppercase;transition:color var(--tr);}
+.btn-back:hover{color:var(--gold);}
+.det-hd{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius2);padding:26px 30px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:18px;position:relative;overflow:hidden;animation:fadeUp .4s ease both;}
+.det-hd::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold2),transparent);}
+.det-icon{width:50px;height:50px;background:var(--gold-dim);border:1px solid var(--border2);border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;}
+.det-name{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:var(--text);letter-spacing:.01em;}
+.det-desc{font-size:12px;color:var(--muted);margin-top:3px;}
+.det-right{text-align:right;}
+.det-solde-lbl{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;font-weight:600;}
+.det-solde{font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:700;color:var(--green);}
+.det-solde.neg{color:var(--red);}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:26px;animation:fadeUp .4s .06s ease both;}
+.stat-c{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius2);padding:18px 20px;position:relative;overflow:hidden;transition:all var(--tr);}
+.stat-c:hover{border-color:var(--border2);transform:translateY(-2px);}
+.stat-c::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.stat-c.g::before{background:linear-gradient(90deg,var(--green),rgba(22,163,74,.15));}
+.stat-c.r::before{background:linear-gradient(90deg,var(--red),rgba(220,38,38,.15));}
+.stat-c.o::before{background:linear-gradient(90deg,var(--gold),rgba(184,150,12,.15));}
+.stat-ic{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;}
+.stat-c.g .stat-ic{background:var(--green-dim);}
+.stat-c.r .stat-ic{background:var(--red-dim);}
+.stat-c.o .stat-ic{background:var(--gold-dim);}
+.stat-lbl{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;font-weight:600;}
+.stat-val{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;}
+.stat-c.g .stat-val{color:var(--green);}
+.stat-c.r .stat-val{color:var(--red);}
+.stat-c.o .stat-val{color:var(--gold);}
+.det-chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius2);padding:20px 22px;margin-bottom:16px;animation:fadeUp .4s .1s ease both;}
+.det-chart-ttl{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:600;color:var(--text);margin-bottom:14px;}
+#det-chart{width:100%;height:140px;display:block;}
+
+/* ── FILTERS ── */
+.filters-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius2);padding:16px 20px;margin-bottom:16px;animation:fadeUp .4s .14s ease both;}
+.filters-chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:12px;}
+.chip{padding:5px 12px;border-radius:100px;border:1px solid var(--border);background:var(--bg2);color:var(--muted);font-size:10px;font-weight:600;cursor:pointer;transition:all var(--tr);white-space:nowrap;font-family:'Outfit',sans-serif;letter-spacing:.04em;}
+.chip:hover{border-color:var(--border2);color:var(--text2);}
+.chip.active{background:var(--gold);border-color:var(--gold);color:#fff;}
+.filters-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;}
+.fg2{display:flex;flex-direction:column;gap:5px;}
+.fg2 label{font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);font-weight:600;}
+.fg2 input{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:13px;font-family:'Outfit',sans-serif;outline:none;transition:border-color var(--tr);}
+.fg2 input:focus{border-color:var(--gold);}
+.search-box{flex:1;min-width:160px;position:relative;}
+.search-box input{width:100%;padding:8px 12px 8px 34px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-family:'Outfit',sans-serif;outline:none;transition:border-color var(--tr);}
+.search-box input:focus{border-color:var(--gold);}
+.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;}
+.export-group{display:flex;gap:6px;}
+
+/* ── TABLE ── */
+.tbl-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius2);overflow:hidden;animation:fadeUp .4s .2s ease both;}
+.tbl-head{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap;gap:8px;}
+.tbl-count{font-size:12px;color:var(--muted);font-weight:500;}
+.tbl-scroll{overflow-x:auto;scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
+table{width:100%;border-collapse:collapse;min-width:600px;}
+thead{background:var(--bg);}
+thead tr{border-bottom:1px solid var(--border);}
+th{text-align:left;padding:12px 16px;font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.16em;text-transform:uppercase;cursor:pointer;user-select:none;white-space:nowrap;transition:color var(--tr);}
+th:hover{color:var(--text2);}
+th.sorted{color:var(--gold);}
+.sort-arrow{margin-left:3px;opacity:.4;font-size:10px;}
+th.sorted .sort-arrow{opacity:1;}
+td{padding:12px 16px;font-size:13px;border-top:1px solid rgba(0,0,0,.03);transition:background var(--tr);}
+tr:hover td{background:rgba(184,150,12,.022);}
+.td-date{color:var(--muted);font-size:11px;white-space:nowrap;}
+.td-v{color:var(--green);font-weight:600;}
+.td-d{color:var(--red);font-weight:600;}
+.td-s{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700;color:var(--gold);}
+.td-s.neg{color:var(--red);}
+.td-by{font-size:11px;color:var(--muted);}
+.td-obs{color:var(--muted);font-size:12px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.td-actions{display:flex;gap:4px;}
+.empty-state{text-align:center;padding:52px;color:var(--muted);font-size:14px;}
+
+/* ── MODALS ── */
+.mo-ov{position:fixed;inset:0;background:rgba(26,23,16,.52);backdrop-filter:blur(12px);z-index:500;display:none;align-items:center;justify-content:center;padding:20px;}
+.mo-ov.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius3);padding:36px;width:100%;max-width:450px;box-shadow:var(--sh-lg);animation:modalIn .32s cubic-bezier(.16,1,.3,1);position:relative;overflow:hidden;max-height:92vh;overflow-y:auto;}
+.modal::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold2),transparent);}
+@keyframes modalIn{from{opacity:0;transform:scale(.93) translateY(22px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal.wide{max-width:520px;}
+.modal.xl{max-width:640px;}
+.mo-top{display:flex;align-items:center;gap:12px;margin-bottom:26px;}
+.mo-icon{width:46px;height:46px;background:var(--gold-dim);border:1px solid var(--border2);border-radius:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.mo-icon.danger{background:var(--red-dim);border-color:rgba(220,38,38,.2);}
+.mo-icon.blue{background:var(--blue-bg);border-color:rgba(37,99,235,.2);}
+.mo-icon.green{background:var(--green-dim);border-color:rgba(22,163,74,.2);}
+.mo-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--text);letter-spacing:.01em;}
+.mo-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+.mo-ft{display:flex;gap:9px;margin-top:26px;}
+.btn-cncl{flex:1;padding:12px;background:var(--bg2);border:1px solid var(--border);color:var(--muted);border-radius:9px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;transition:all var(--tr);}
+.btn-cncl:hover{border-color:var(--border2);color:var(--text2);}
+.btn-sbmt{flex:2;padding:12px;background:var(--gold);color:#fff;font-family:'Outfit',sans-serif;font-weight:700;font-size:10px;letter-spacing:.12em;text-transform:uppercase;border:none;border-radius:9px;cursor:pointer;transition:all var(--tr);}
+.btn-sbmt:hover{background:var(--gold2);box-shadow:0 5px 22px var(--gold-glow2);}
+.btn-sbmt:disabled{opacity:.4;cursor:not-allowed;}
+.btn-sbmt.danger{background:var(--red);}
+.btn-sbmt.danger:hover{background:#b91c1c;}
+.btn-sbmt.green{background:var(--green);}
+.btn-sbmt.green:hover{background:#15803d;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.confirm-msg{font-size:14px;color:var(--text2);line-height:1.68;margin-top:6px;}
+
+/* ── USERS ── */
+.users-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;}
+.user-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius2);padding:22px;animation:cardIn .4s ease both;transition:all var(--tr);}
+.user-card:hover{border-color:var(--border2);box-shadow:var(--sh);}
+.user-av{width:46px;height:46px;background:var(--gold-dim);border:1.5px solid var(--border2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:var(--gold);margin-bottom:12px;}
+.user-name{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;color:var(--text);margin-bottom:2px;}
+.user-num{font-size:12px;color:var(--muted);margin-bottom:10px;}
+.role-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:100px;font-size:10px;font-weight:700;letter-spacing:.06em;}
+.role-admin{background:var(--gold-dim);color:var(--gold);border:1px solid var(--border2);}
+.role-member{background:var(--blue-bg);color:var(--blue);border:1px solid rgba(37,99,235,.18);}
+
+/* ── PROFIL ── */
+.profile-card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius3);padding:34px;margin-bottom:18px;animation:fadeUp .4s ease both;position:relative;overflow:hidden;}
+.profile-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold2),transparent);}
+.profile-av-big{width:80px;height:80px;background:var(--gold-dim);border:2px solid var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:34px;font-weight:700;color:var(--gold2);margin-bottom:16px;}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--border2);color:var(--text);padding:13px 17px;border-radius:12px;font-size:13px;z-index:1000;transform:translateY(70px) scale(.95);opacity:0;transition:all .36s cubic-bezier(.16,1,.3,1);max-width:310px;font-weight:500;display:flex;align-items:center;gap:9px;box-shadow:var(--sh-lg);border-left:3px solid var(--border2);}
+.toast.show{transform:translateY(0) scale(1);opacity:1;}
+.toast.ok{border-left-color:var(--green);}
+.toast.err{border-left-color:var(--red);}
+
+/* ── SIDE PANEL (show business) ── */
+.side-panel-ov{position:fixed;inset:0;background:rgba(26,23,16,.4);backdrop-filter:blur(6px);z-index:400;display:none;justify-content:flex-end;}
+.side-panel-ov.open{display:flex;}
+.side-panel{background:var(--surface);width:100%;max-width:420px;height:100%;overflow-y:auto;border-left:1px solid var(--border2);box-shadow:-8px 0 40px rgba(0,0,0,.12);transform:translateX(100%);transition:transform .36s cubic-bezier(.16,1,.3,1);position:relative;}
+.side-panel-ov.open .side-panel{transform:translateX(0);}
+.side-panel::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold2),transparent);}
+.sp-head{padding:28px 26px 20px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
+.sp-close{width:32px;height:32px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all var(--tr);flex-shrink:0;}
+.sp-close:hover{border-color:var(--border2);background:var(--bg3);}
+.sp-body{padding:22px 26px;}
+.sp-solde-lbl{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;font-weight:600;}
+.sp-solde{font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:700;color:var(--green);line-height:1;margin-bottom:20px;}
+.sp-solde.neg{color:var(--red);}
+.sp-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:22px;}
+.sp-stat{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;}
+.sp-stat-lbl{font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;font-weight:600;}
+.sp-stat-val{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;}
+.sp-stat-val.g{color:var(--green);}
+.sp-stat-val.r{color:var(--red);}
+.sp-sect-title{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:600;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.sp-sect-title::after{content:'';flex:1;height:1px;background:var(--border);}
+.sp-tx-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);gap:10px;}
+.sp-tx-item:last-child{border-bottom:none;}
+.sp-tx-date{font-size:11px;color:var(--muted);white-space:nowrap;}
+.sp-tx-obj{font-size:13px;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sp-tx-val{font-size:13px;font-weight:700;}
+.sp-tx-val.v{color:var(--green);}
+.sp-tx-val.d{color:var(--red);}
+
+/* ── SHOW TRANSACTION MODAL ── */
+.tx-show-field{display:flex;flex-direction:column;gap:4px;margin-bottom:16px;}
+.tx-show-lbl{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:600;}
+.tx-show-val{font-size:14px;color:var(--text);font-weight:500;}
+.tx-show-val.big{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:700;}
+.tx-show-val.green{color:var(--green);}
+.tx-show-val.red{color:var(--red);}
+.tx-show-val.gold{color:var(--gold);}
+.tx-show-badge{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:100px;font-size:11px;font-weight:700;}
+.tx-show-badge.v{background:var(--green-bg);color:var(--green);}
+.tx-show-badge.d{background:var(--red-bg);color:var(--red);}
+.tx-show-badge.mixed{background:var(--gold-dim);color:var(--gold);}
+
+/* ── MULTI-ENREGISTREMENT ── */
+.multi-progress{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:20px;}
+.mp-bar-wrap{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:8px;}
+.mp-bar{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold3));border-radius:2px;transition:width .4s ease;}
+.mp-label{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--muted);font-weight:600;}
+.mp-step{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700;color:var(--gold);}
+
+/* Récap multi */
+.recap-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:16px;}
+.recap-table th{background:var(--bg2);padding:8px 12px;text-align:left;font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;border-bottom:1px solid var(--border);}
+.recap-table td{padding:9px 12px;border-bottom:1px solid rgba(0,0,0,.04);color:var(--text2);font-size:12px;}
+.recap-table tr:last-child td{border-bottom:none;}
+.recap-table .v-cell{color:var(--green);font-weight:600;}
+.recap-table .d-cell{color:var(--red);font-weight:600;}
+.recap-total{background:var(--bg2);border:1px solid var(--border2);border-radius:10px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+.recap-total-item{text-align:center;}
+.recap-total-lbl{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:4px;}
+.recap-total-val{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;}
+.recap-total-val.g{color:var(--green);}
+.recap-total-val.r{color:var(--red);}
+.recap-total-val.o{color:var(--gold);}
+
+/* ── WARMUP INDICATOR ── */
+.warmup-bar{position:fixed;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold),var(--gold3),var(--gold));background-size:200% 100%;animation:warmupSlide 1.5s ease infinite;z-index:9998;display:none;}
+.warmup-bar.show{display:block;}
+@keyframes warmupSlide{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  .content{padding:16px 14px;}.topbar{padding:0 14px;}.nav-tabs{padding:0 14px;}
+  .total-amount{font-size:36px;}.stats-row{grid-template-columns:1fr 1fr;}
+  .det-hd{flex-direction:column;align-items:flex-start;}.det-right{text-align:left;}.det-solde{font-size:30px;}
+  th,td{padding:10px 12px;font-size:12px;}.login-card{padding:28px 22px;}.modal{padding:26px 20px;}.grid2{grid-template-columns:1fr;}
+  .side-panel{max-width:100%;}
+}
+@media(max-width:480px){
+  .stats-row{grid-template-columns:1fr;}.total-amount{font-size:28px;}
+  .biz-grid{grid-template-columns:1fr;}.users-grid{grid-template-columns:1fr;}
+  .tb-name{display:none;}.tb-badge{display:none;}
+}
+</style>
+</head>
+<body>
+
+<div class="warmup-bar" id="warmup-bar"></div>
+
+<div id="loader">
+  <div class="ld-crest"><div class="ld-monogram">YM</div></div>
+  <div style="text-align:center;">
+    <div class="ld-title">Yao<em>&#8209;</em>Manager</div>
+    <div class="ld-sub">Gestion Familiale</div>
+  </div>
+  <div class="ld-bar"><div class="ld-bar-fill"></div></div>
+</div>
+
+<div class="session-banner" id="session-banner">
+  <span>⚠️ Votre session a expiré. Veuillez vous reconnecter.</span>
+  <button onclick="forceLogout()">Se reconnecter</button>
+</div>
+
+<!-- LOGIN -->
+<div class="page" id="page-login">
+  <div class="login-wrap">
+    <div class="login-brand">
+      <div class="brand-emblem">
+        <svg width="26" height="26" fill="none" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke="#b8960c" stroke-width="1.5" stroke-linejoin="round"/><polyline points="9 22 9 12 15 12 15 22" stroke="#b8960c" stroke-width="1.5" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="brand-name">Yao<em>&#8209;</em>Manager</div>
+      <div class="brand-tag">Tableau de bord financier familial</div>
+    </div>
+    <div class="ornament"><div class="ornament-line"></div><div class="ornament-gem"></div><div class="ornament-line"></div></div>
+    <div class="login-card">
+      <div class="login-card-ttl">Accéder à votre espace</div>
+      <div class="fg">
+        <label><svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 8.81 19.79 19.79 0 01.01 2.2 2 2 0 012 0h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 14z"/></svg>Numéro de téléphone</label>
+        <input type="tel" id="l-num" placeholder="0700000000" autocomplete="tel">
+      </div>
+      <div class="fg">
+        <label><svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Mot de passe</label>
+        <input type="password" id="l-pwd" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="btn-primary" id="btn-login" onclick="doLogin()">Accéder au tableau de bord</button>
+      <div class="err-box" id="l-err">
+        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span id="l-err-txt"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="page" id="page-app">
+  <nav class="topbar">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="tb-logo">Yao<em>&#8209;</em>Manager</div>
+      <div class="tb-badge">Famille</div>
+    </div>
+    <div class="tb-right">
+      <div class="tb-user" onclick="goTab('profile')" title="Mon profil">
+        <div class="tb-avatar" id="tb-av">?</div>
+        <span class="tb-name" id="tb-name">—</span>
+      </div>
+      <button class="btn-out" onclick="logout()">
+        <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+        Déconnexion
+      </button>
+    </div>
+  </nav>
+  <div class="nav-tabs">
+    <div class="nav-tab active" id="tab-home" onclick="goTab('home')">
+      <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      Tableau de bord
+    </div>
+    <div class="nav-tab admin-only" id="tab-users" onclick="goTab('users')">
+      <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+      Membres
+    </div>
+    <div class="nav-tab" id="tab-profile" onclick="goTab('profile')">
+      <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Mon profil
+    </div>
+  </div>
+
+  <!-- HOME -->
+  <div id="v-home" style="display:none">
+    <div class="content">
+      <div id="home-skeleton">
+        <div class="skel-card" style="margin-bottom:26px;padding:32px 38px;">
+          <div class="skel skel-line w40" style="margin-bottom:14px;"></div>
+          <div class="skel skel-amount"></div>
+          <div class="skel skel-line w60"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:26px;">
+          <div class="skel skel-biz"></div><div class="skel skel-biz"></div><div class="skel skel-biz"></div>
+        </div>
+      </div>
+      <div id="home-content" style="display:none">
+        <div class="total-card">
+          <div class="total-eyebrow"><div class="total-dot"></div>Solde consolidé — tous business</div>
+          <div class="total-amount" id="total-amount">—</div>
+          <div class="total-meta"><div class="total-chip" id="total-chip">Chargement…</div></div>
+        </div>
+        <div class="stats-row" id="dash-stats-row" style="display:none">
+          <div class="stat-c g"><div class="stat-ic"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#16a34a" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div><div class="stat-lbl">Total versements</div><div class="stat-val" id="dash-sv">—</div></div>
+          <div class="stat-c r"><div class="stat-ic"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#dc2626" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg></div><div class="stat-lbl">Total dépenses</div><div class="stat-val" id="dash-sd">—</div></div>
+          <div class="stat-c o"><div class="stat-ic"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#b8960c" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div class="stat-lbl">Bénéfice net</div><div class="stat-val" id="dash-sb">—</div></div>
+        </div>
+        <div class="dash-chart-card" id="dash-chart-card" style="display:none">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;color:var(--text);">Soldes par business</div>
+            <div style="display:flex;gap:14px;flex-wrap:wrap;">
+              <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);"><span style="width:10px;height:10px;border-radius:2px;background:#1D9E75;display:inline-block;"></span>Positif</span>
+              <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);"><span style="width:10px;height:10px;border-radius:2px;background:#dc2626;display:inline-block;"></span>Négatif</span>
+              <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);"><span style="width:10px;height:10px;border-radius:50%;background:#b8960c;display:inline-block;"></span>Tendance cumulée</span>
+            </div>
+          </div>
+          <div style="position:relative;width:100%;height:240px;"><canvas id="dash-chart"></canvas></div>
+        </div>
+        <div class="sec-hd">
+          <div class="sec-hd-title">Mes Business</div>
+          <div class="sec-hd-line"></div>
+          <button class="btn-add admin-only" onclick="openMoBiz()">
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Nouveau business
+          </button>
+        </div>
+        <div class="biz-grid" id="biz-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DETAIL -->
+  <div id="v-detail" style="display:none">
+    <div class="content">
+      <button class="btn-back" onclick="goTab('home')">
+        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        Retour aux business
+      </button>
+      <div class="det-hd">
+        <div>
+          <div class="det-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="#b8960c" stroke-width="1.7"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg></div>
+          <div class="det-name" id="det-name">—</div>
+          <div class="det-desc" id="det-desc"></div>
+        </div>
+        <div class="det-right">
+          <div class="det-solde-lbl">Solde en caisse</div>
+          <div class="det-solde" id="det-solde">—</div>
+          <div style="display:flex;gap:6px;margin-top:10px;justify-content:flex-end;" id="det-admin-btns">
+            <button class="btn-sm" onclick="openEditBiz()"><svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Modifier</button>
+            <button class="btn-sm danger" onclick="confirmDeleteBiz()"><svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>Supprimer</button>
+          </div>
+        </div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-c g"><div class="stat-ic"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#16a34a" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div><div class="stat-lbl">Total versements</div><div class="stat-val" id="s-v">—</div></div>
+        <div class="stat-c r"><div class="stat-ic"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#dc2626" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg></div><div class="stat-lbl">Total dépenses</div><div class="stat-val" id="s-d">—</div></div>
+        <div class="stat-c o"><div class="stat-ic"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#b8960c" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div class="stat-lbl">Bénéfice net</div><div class="stat-val" id="s-b">—</div></div>
+      </div>
+      <div class="det-chart-card"><div class="det-chart-ttl">Évolution du solde</div><canvas id="det-chart"></canvas></div>
+      <div class="filters-wrap">
+        <div class="filters-chips">
+          <button class="chip active" onclick="setQuick('all',this)">Tout</button>
+          <button class="chip" onclick="setQuick('today',this)">Aujourd'hui</button>
+          <button class="chip" onclick="setQuick('yesterday',this)">Hier</button>
+          <button class="chip" onclick="setQuick('before_yesterday',this)">Avant-hier</button>
+          <button class="chip" onclick="setQuick('week',this)">Cette semaine</button>
+          <button class="chip" onclick="setQuick('last_week',this)">Sem. dernière</button>
+          <button class="chip" onclick="setQuick('month',this)">Ce mois</button>
+          <button class="chip" onclick="setQuick('last_month',this)">Mois dernier</button>
+          <button class="chip" onclick="setQuick('quarter',this)">Ce trimestre</button>
+          <button class="chip" onclick="setQuick('year',this)">Cette année</button>
+        </div>
+        <div class="filters-row">
+          <div class="fg2"><label>Du</label><input type="date" id="f-deb" oninput="onManualDate()"></div>
+          <div class="fg2"><label>Au</label><input type="date" id="f-fin" oninput="onManualDate()"></div>
+          <div class="search-box">
+            <svg class="search-icon" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="f-search" placeholder="Rechercher…" oninput="applyLocalFilter()">
+          </div>
+          <button class="btn-sm" onclick="resetFilter()">Reset</button>
+          <button class="btn-add" onclick="openMoTx()">
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Nouvelle entrée
+          </button>
+          <button class="btn-sm" onclick="openMultiTx()" style="border-color:var(--blue);color:var(--blue);">
+            <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            Multi-enregistrement
+          </button>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <div class="tbl-head">
+          <span class="tbl-count" id="tbl-count">— transactions</span>
+          <div class="export-group">
+            <button class="btn-sm" onclick="exportExcel()">Excel</button>
+            <button class="btn-sm" onclick="exportPDF()">PDF</button>
+          </div>
+        </div>
+        <div class="tbl-scroll">
+          <table>
+            <thead><tr>
+              <th onclick="sortTable('date')" id="th-date">Date <span class="sort-arrow">↕</span></th>
+              <th onclick="sortTable('objet')" id="th-objet">Objet <span class="sort-arrow">↕</span></th>
+              <th onclick="sortTable('versement')" id="th-versement">Versement <span class="sort-arrow">↕</span></th>
+              <th onclick="sortTable('depense')" id="th-depense">Dépense <span class="sort-arrow">↕</span></th>
+              <th onclick="sortTable('solde')" id="th-solde">Solde <span class="sort-arrow">↕</span></th>
+              <th>Observation</th><th>Par</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="tx-body"><tr><td colspan="8" class="empty-state">Chargement…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- USERS -->
+  <div id="v-users" style="display:none">
+    <div class="content">
+      <div class="sec-hd"><div class="sec-hd-title">Membres de la famille</div><div class="sec-hd-line"></div>
+        <button class="btn-add" onclick="openMoAddUser()"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Ajouter un membre</button>
+      </div>
+      <div class="users-grid" id="users-grid"><div class="empty-state">Chargement…</div></div>
+    </div>
+  </div>
+
+  <!-- PROFIL -->
+  <div id="v-profile" style="display:none">
+    <div class="content">
+      <div class="sec-hd"><div class="sec-hd-title">Mon profil</div><div class="sec-hd-line"></div></div>
+      <div class="profile-card">
+        <div class="profile-av-big" id="profile-av">?</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700;" id="profile-name">—</div>
+          <span class="role-badge" id="profile-role">—</span>
+        </div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:26px;" id="profile-num">—</div>
+        <div style="height:1px;background:var(--border);margin-bottom:26px;"></div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;margin-bottom:18px;">Modifier mes coordonnées</div>
+        <div class="grid2">
+          <div class="fg"><label>Nom complet</label><input type="text" id="p-nom" placeholder="Votre nom"></div>
+          <div class="fg"><label>Numéro</label><input type="tel" id="p-num" placeholder="0700000000"></div>
+        </div>
+        <div class="grid2">
+          <div class="fg"><label>Nouveau mot de passe</label><input type="password" id="p-pwd" placeholder="Laisser vide = inchangé"></div>
+          <div class="fg"><label>Confirmer</label><input type="password" id="p-pwd2" placeholder="Confirmer"></div>
+        </div>
+        <button class="btn-add" onclick="saveProfile()"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Sauvegarder</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ MODALS ═══════════════ -->
+
+<!-- Business -->
+<div class="mo-ov" id="mo-biz"><div class="modal">
+  <div class="mo-top"><div class="mo-icon"><svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#b8960c" stroke-width="1.7"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg></div>
+  <div><div class="mo-title" id="mo-biz-title">Nouveau Business</div><div class="mo-sub">Ajouter une activité</div></div></div>
+  <div class="fg"><label>Nom du business *</label><input type="text" id="b-nom" placeholder="Ex: Moulin, Boutique…"></div>
+  <div class="fg"><label>Description (optionnel)</label><input type="text" id="b-desc" placeholder="Ex: Moulin à grain de Yopougon"></div>
+  <div class="mo-ft"><button class="btn-cncl" onclick="closeMo('mo-biz')">Annuler</button><button class="btn-sbmt" id="btn-b" onclick="submitBiz()">Créer</button></div>
+</div></div>
+
+<!-- Transaction simple -->
+<div class="mo-ov" id="mo-tx"><div class="modal">
+  <div class="mo-top"><div class="mo-icon"><svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#b8960c" stroke-width="1.7"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
+  <div><div class="mo-title" id="mo-tx-title">Nouvelle Entrée</div><div class="mo-sub" id="mo-tx-sub"></div></div></div>
+  <input type="hidden" id="t-id">
+  <div class="fg"><label>Date *</label><input type="date" id="t-date"></div>
+  <div class="fg"><label>Objet *</label><input type="text" id="t-obj" placeholder="Ex: Vente farine, Carburant…"></div>
+  <div class="grid2">
+    <div class="fg"><label>Versement (FCFA)</label><input type="number" id="t-v" placeholder="0" min="0"></div>
+    <div class="fg"><label>Dépense (FCFA)</label><input type="number" id="t-d" placeholder="0" min="0"></div>
+  </div>
+  <div class="fg"><label>Observation</label><input type="text" id="t-obs" placeholder="Remarque optionnelle…"></div>
+  <div class="mo-ft"><button class="btn-cncl" onclick="closeMo('mo-tx')">Annuler</button><button class="btn-sbmt" id="btn-tx" onclick="submitTx()">Enregistrer</button></div>
+</div></div>
+
+<!-- MULTI-ENREGISTREMENT — Étape 1 : saisir le nombre -->
+<div class="mo-ov" id="mo-multi-start"><div class="modal">
+  <div class="mo-top">
+    <div class="mo-icon blue"><svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#2563eb" stroke-width="1.7"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></div>
+    <div><div class="mo-title">Multi-enregistrement</div><div class="mo-sub" id="multi-start-sub"></div></div>
+  </div>
+  <div class="fg">
+    <label>Nombre d'entrées prévues</label>
+    <input type="number" id="multi-count-input" placeholder="Laisser vide = illimité" min="1" max="100">
+  </div>
+  <p style="font-size:12px;color:var(--muted);margin-top:-8px;margin-bottom:4px;">Vous pourrez arrêter à tout moment en cliquant sur <strong>J'ai terminé</strong>.</p>
+  <div class="mo-ft">
+    <button class="btn-cncl" onclick="closeMo('mo-multi-start')">Annuler</button>
+    <button class="btn-sbmt" onclick="startMultiEntry()">Commencer</button>
+  </div>
+</div></div>
+
+<!-- MULTI-ENREGISTREMENT — Étape 2 : saisie une par une -->
+<div class="mo-ov" id="mo-multi-entry"><div class="modal wide">
+  <div class="mo-top">
+    <div class="mo-icon blue"><svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#2563eb" stroke-width="1.7"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
+    <div style="flex:1"><div class="mo-title" id="multi-entry-title">Entrée 1</div><div class="mo-sub" id="multi-entry-sub"></div></div>
+  </div>
+  <!-- Barre de progression -->
+  <div class="multi-progress">
+    <div class="mp-label">
+      <span id="mp-label-txt">Transaction <span id="mp-cur">1</span> sur <span id="mp-tot">?</span></span>
+      <span class="mp-step" id="mp-step-lbl">1 / ?</span>
+    </div>
+    <div class="mp-bar-wrap"><div class="mp-bar" id="mp-bar" style="width:0%"></div></div>
+  </div>
+  <div class="fg"><label>Date *</label><input type="date" id="me-date"></div>
+  <div class="fg"><label>Objet *</label><input type="text" id="me-obj" placeholder="Ex: Vente farine, Carburant…"></div>
+  <div class="grid2">
+    <div class="fg"><label>Versement (FCFA)</label><input type="number" id="me-v" placeholder="0" min="0"></div>
+    <div class="fg"><label>Dépense (FCFA)</label><input type="number" id="me-d" placeholder="0" min="0"></div>
+  </div>
+  <div class="fg"><label>Observation</label><input type="text" id="me-obs" placeholder="Remarque optionnelle…"></div>
+  <div class="mo-ft" style="flex-wrap:wrap;gap:8px;">
+    <button class="btn-cncl" onclick="cancelMulti()" style="flex:1">Annuler tout</button>
+    <button class="btn-sbmt" id="btn-me-done" onclick="multiEntryDone()" style="flex:1;background:var(--blue);">J'ai terminé</button>
+    <button class="btn-sbmt" id="btn-me-next" onclick="multiEntryNext()" style="flex:2;">Suivant →</button>
+  </div>
+</div></div>
+
+<!-- MULTI-ENREGISTREMENT — Étape 3 : récapitulatif -->
+<div class="mo-ov" id="mo-multi-recap"><div class="modal xl">
+  <div class="mo-top">
+    <div class="mo-icon green"><svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#16a34a" stroke-width="1.7"><polyline points="20 6 9 17 4 12"/></svg></div>
+    <div><div class="mo-title">Récapitulatif</div><div class="mo-sub" id="recap-sub">Vérifiez avant de valider</div></div>
+  </div>
+  <div id="recap-table-wrap"></div>
+  <div class="recap-total" id="recap-total"></div>
+  <div class="mo-ft">
+    <button class="btn-cncl" onclick="cancelMulti()">Annuler tout</button>
+    <button class="btn-sbmt" id="btn-recap-back" onclick="backToMultiEntry()" style="flex:1;background:var(--blue);">← Modifier</button>
+    <button class="btn-sbmt green" id="btn-recap-confirm" onclick="submitMultiTx()">✓ Valider tout</button>
+  </div>
+</div></div>
+
+<!-- Show Business (Side Panel) -->
+<div class="side-panel-ov" id="sp-biz-ov" onclick="closeSidePanel(event)">
+  <div class="side-panel" id="sp-biz">
+    <div class="sp-head">
+      <div>
+        <div style="font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:6px;">Aperçu Business</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:700;color:var(--text);" id="sp-biz-name">—</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px;" id="sp-biz-desc"></div>
+      </div>
+      <button class="sp-close" onclick="document.getElementById('sp-biz-ov').classList.remove('open')">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="sp-body">
+      <div class="sp-solde-lbl">Solde en caisse</div>
+      <div class="sp-solde" id="sp-biz-solde">—</div>
+      <div class="sp-stats" id="sp-biz-stats">
+        <div class="sp-stat"><div class="sp-stat-lbl">Versements</div><div class="sp-stat-val g" id="sp-biz-v">—</div></div>
+        <div class="sp-stat"><div class="sp-stat-lbl">Dépenses</div><div class="sp-stat-val r" id="sp-biz-d">—</div></div>
+        <div class="sp-stat"><div class="sp-stat-lbl">Transactions</div><div class="sp-stat-val" id="sp-biz-nb">—</div></div>
+        <div class="sp-stat"><div class="sp-stat-lbl">Bénéfice net</div><div class="sp-stat-val o" id="sp-biz-b" style="color:var(--gold)">—</div></div>
+      </div>
+      <div class="sp-sect-title">Dernières transactions</div>
+      <div id="sp-biz-tx">
+        <div style="text-align:center;padding:24px;color:var(--muted);font-size:13px;">Chargement…</div>
+      </div>
+      <div style="margin-top:20px;">
+        <button class="btn-add" style="width:100%;justify-content:center;" onclick="openBizFromPanel()">
+          <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          Ouvrir le business complet
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Show Transaction (Modal) -->
+<div class="mo-ov" id="mo-show-tx"><div class="modal wide">
+  <div class="mo-top">
+    <div class="mo-icon blue"><svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#2563eb" stroke-width="1.7"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div>
+    <div><div class="mo-title">Détail transaction</div><div class="mo-sub" id="show-tx-sub">—</div></div>
+  </div>
+  <div id="show-tx-body"></div>
+  <div class="mo-ft">
+    <button class="btn-cncl" onclick="closeMo('mo-show-tx')">Fermer</button>
+    <button class="btn-sbmt" id="btn-show-tx-edit" onclick="editTxFromShow()">Modifier</button>
+  </div>
+</div></div>
+
+<!-- Add User -->
+<div class="mo-ov" id="mo-add-user"><div class="modal wide">
+  <div class="mo-top"><div class="mo-icon"><svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#b8960c" stroke-width="1.7"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+  <div><div class="mo-title" id="mo-user-title">Nouveau Membre</div><div class="mo-sub">Ajouter un membre de la famille</div></div></div>
+  <input type="hidden" id="u-id">
+  <div class="grid2">
+    <div class="fg"><label>Nom complet *</label><input type="text" id="u-nom" placeholder="Prénom Nom"></div>
+    <div class="fg"><label>Numéro *</label><input type="tel" id="u-num" placeholder="0700000000"></div>
+  </div>
+  <div class="grid2">
+    <div class="fg"><label>Mot de passe *</label><input type="password" id="u-pwd" placeholder="Min. 6 caractères"></div>
+    <div class="fg"><label>Rôle</label><select id="u-role"><option value="member">Membre</option><option value="admin">Administrateur</option></select></div>
+  </div>
+  <div class="mo-ft"><button class="btn-cncl" onclick="closeMo('mo-add-user')">Annuler</button><button class="btn-sbmt" id="btn-u" onclick="submitUser()">Créer</button></div>
+</div></div>
+
+<!-- Confirm -->
+<div class="mo-ov" id="mo-confirm"><div class="modal">
+  <div class="mo-top"><div class="mo-icon danger"><svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#dc2626" stroke-width="1.7"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+  <div><div class="mo-title" id="confirm-title">Confirmer</div></div></div>
+  <div class="confirm-msg" id="confirm-msg"></div>
+  <div class="mo-ft"><button class="btn-cncl" onclick="closeMo('mo-confirm')">Annuler</button><button class="btn-sbmt danger" id="btn-confirm">Supprimer</button></div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════════════════════════
+const API_URL = 'https://script.google.com/macros/s/AKfycbzXbfNpBX4gBm6yKck9fHXBtvrR-zSolOj8nUEN5BX7MTLxhoayhcJ_xm1aWL9TsRG1iQ/exec';
+
+// ═══════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════
+let user = null, sessionToken = null, biz = null, allTx = [];
+let sortCol = 'date', sortDir = -1;
+let sessionRefreshInterval = null;
+
+// Multi-entry state
+let multiEntries   = [];   // Entrées saisies
+let multiTotal     = null; // Nombre cible (null = illimité)
+let multiCurrent   = 0;    // Index en cours
+let spCurrentBiz   = null; // Business affiché dans le side panel
+let showTxCurrent  = null; // Transaction affichée dans le show modal
+
+const BIZ_COLORS = [
+  {accent:'#1D9E75',iconBg:'#E1F5EE',iconStroke:'#0F6E56'},
+  {accent:'#b8960c',iconBg:'#faf3d8',iconStroke:'#8a6e09'},
+  {accent:'#2563eb',iconBg:'#E6F1FB',iconStroke:'#185FA5'},
+  {accent:'#9333ea',iconBg:'#f3e8ff',iconStroke:'#7e22ce'},
+  {accent:'#dc2626',iconBg:'#FCEBEB',iconStroke:'#991b1b'},
+  {accent:'#0891b2',iconBg:'#e0f7fa',iconStroke:'#0e7490'},
+];
+const BIZ_ICONS = [
+  `<svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="{s}" stroke-width="1.7"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>`,
+  `<svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="{s}" stroke-width="1.7"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
+  `<svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="{s}" stroke-width="1.7"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>`,
+  `<svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="{s}" stroke-width="1.7"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>`,
+  `<svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="{s}" stroke-width="1.7"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>`,
+  `<svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="{s}" stroke-width="1.7"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+];
+
+// ═══════════════════════════════════════════════════════════
+//  CACHE — TTL 5 min, invalidé sur mutation
+// ═══════════════════════════════════════════════════════════
+const cache = {
+  businesses: null, ts: 0, TTL: 5 * 60 * 1000,
+  txCache: {},          // { [bizId]: { data, ts } }
+  txTTL: 5 * 60 * 1000,
+  stale() { return Date.now() - this.ts > this.TTL; },
+  set(d) { this.businesses = d; this.ts = Date.now(); },
+  clear() { this.businesses = null; this.ts = 0; this.txCache = {}; },
+  setTx(bizId, data) { this.txCache[bizId] = { data, ts: Date.now() }; },
+  getTx(bizId) {
+    const e = this.txCache[bizId];
+    if (!e || Date.now() - e.ts > this.txTTL) return null;
+    return e.data;
+  },
+  clearTx(bizId) { delete this.txCache[bizId]; }
+};
+
+// ═══════════════════════════════════════════════════════════
+//  WARM-UP — appel silencieux dès le démarrage
+// ═══════════════════════════════════════════════════════════
+function warmUpScript() {
+  // Ping silencieux pendant la page de login pour réveiller le script
+  fetch(API_URL + '?action=ping').catch(() => {});
+}
+
+// ═══════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════
+window.onload = () => {
+  warmUpScript(); // Démarre le warm-up immédiatement
+
+  const s = localStorage.getItem('ym_session');
+  if (s) {
+    const saved = JSON.parse(s);
+    if (saved.expires && saved.expires < Date.now()) {
+      localStorage.removeItem('ym_session');
+      showLogin();
+    } else {
+      user = saved.user;
+      sessionToken = saved.token;
+      showApp();
+    }
+  } else showLogin();
+
+  setTimeout(() => {
+    const l = document.getElementById('loader');
+    l.classList.add('hide');
+    setTimeout(() => l.style.display = 'none', 600);
+  }, 1400);
+};
+
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  if (document.getElementById('page-login').classList.contains('active')) doLogin();
+  if (document.getElementById('mo-biz').classList.contains('open'))       submitBiz();
+  if (document.getElementById('mo-tx').classList.contains('open'))        submitTx();
+  if (document.getElementById('mo-add-user').classList.contains('open'))  submitUser();
+  if (document.getElementById('mo-multi-entry').classList.contains('open')) multiEntryNext();
+});
+
+// ═══════════════════════════════════════════════════════════
+//  SESSION
+// ═══════════════════════════════════════════════════════════
+function saveSession(userData, token, expires) {
+  user = userData; sessionToken = token;
+  localStorage.setItem('ym_session', JSON.stringify({ user: userData, token, expires }));
+  startSessionRefresh();
+}
+function startSessionRefresh() {
+  if (sessionRefreshInterval) clearInterval(sessionRefreshInterval);
+  sessionRefreshInterval = setInterval(async () => {
+    try {
+      const r = await apiRaw({ action: 'refreshSession', session_token: sessionToken });
+      if (r.success) {
+        const saved = JSON.parse(localStorage.getItem('ym_session') || '{}');
+        saved.expires = r.expires;
+        localStorage.setItem('ym_session', JSON.stringify(saved));
+      } else showSessionExpired();
+    } catch {}
+  }, 30 * 60 * 1000);
+}
+function showSessionExpired() {
+  clearInterval(sessionRefreshInterval);
+  document.getElementById('session-banner').classList.add('show');
+}
+function forceLogout() {
+  document.getElementById('session-banner').classList.remove('show');
+  logout();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  AUTH
+// ═══════════════════════════════════════════════════════════
+function showLogin() {
+  document.getElementById('page-login').classList.add('active');
+  document.getElementById('page-app').classList.remove('active');
+}
+function showApp() {
+  document.getElementById('page-login').classList.remove('active');
+  document.getElementById('page-app').classList.add('active');
+  document.getElementById('tb-av').textContent   = user.nom ? user.nom[0].toUpperCase() : '?';
+  document.getElementById('tb-name').textContent = user.nom || '—';
+  applyRoleUI();
+  goTab('home');
+}
+function applyRoleUI() {
+  const isAdmin = user.role === 'admin';
+  document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdmin ? '' : 'none');
+}
+async function doLogin() {
+  const num = document.getElementById('l-num').value.trim();
+  const pwd = document.getElementById('l-pwd').value.trim();
+  const btn = document.getElementById('btn-login');
+  if (!num || !pwd) { showLoginErr('Remplissez tous les champs'); return; }
+  btn.disabled = true; btn.textContent = 'Connexion…';
+  document.getElementById('l-err').classList.remove('show');
+  document.getElementById('warmup-bar').classList.add('show');
+  try {
+    const r = await apiRaw({ action: 'login', numero: num, password: pwd });
+    if (r.success) {
+      saveSession(r.user, r.session_token, r.session_expires);
+      showApp();
+    } else showLoginErr(r.message || 'Identifiants incorrects');
+  } catch { showLoginErr('Erreur réseau. Réessayez.'); }
+  btn.disabled = false; btn.textContent = 'Accéder au tableau de bord';
+  document.getElementById('warmup-bar').classList.remove('show');
+}
+function showLoginErr(m) {
+  document.getElementById('l-err-txt').textContent = m;
+  document.getElementById('l-err').classList.add('show');
+}
+async function logout() {
+  clearInterval(sessionRefreshInterval);
+  localStorage.removeItem('ym_session');
+  user = null; sessionToken = null; cache.clear();
+  if (window._dashChartInstance) { window._dashChartInstance.destroy(); window._dashChartInstance = null; }
+  showLogin();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════════════
+function goTab(tab) {
+  if (tab === 'users' && user.role !== 'admin') { toast('Accès réservé aux administrateurs', 'err'); return; }
+  ['home', 'users', 'profile'].forEach(t => document.getElementById('tab-' + t)?.classList.toggle('active', t === tab));
+  document.getElementById('v-home').style.display    = tab === 'home'    ? 'block' : 'none';
+  document.getElementById('v-detail').style.display  = 'none';
+  document.getElementById('v-users').style.display   = tab === 'users'   ? 'block' : 'none';
+  document.getElementById('v-profile').style.display = tab === 'profile' ? 'block' : 'none';
+  if (tab === 'home')    loadHome();
+  if (tab === 'users')   loadUsers();
+  if (tab === 'profile') loadProfile();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  HOME — avec skeleton + cache 5min
+// ═══════════════════════════════════════════════════════════
+async function loadHome() {
+  // Si cache valide → affichage immédiat, pas de skeleton
+  if (cache.businesses && !cache.stale()) {
+    document.getElementById('home-skeleton').style.display = 'none';
+    document.getElementById('home-content').style.display  = 'block';
+    renderHome(cache.businesses, cache._total);
+    return;
+  }
+  // Sinon : skeleton pendant le chargement
+  document.getElementById('home-skeleton').style.display = 'block';
+  document.getElementById('home-content').style.display  = 'none';
+  try {
+    const r = await api({ action: 'getBusinesses' });
+    if (r.success) {
+      cache.set(r.data); cache._total = r.total;
+      document.getElementById('home-skeleton').style.display = 'none';
+      document.getElementById('home-content').style.display  = 'block';
+      renderHome(r.data, r.total);
+    }
+  } catch { toast('Erreur de chargement', 'err'); }
+}
+
+function renderHome(list, total) {
+  const t = total !== undefined ? parseFloat(total) || 0 : (list || []).reduce((s, b) => s + (b.solde || 0), 0);
+  animateNumber(document.getElementById('total-amount'), t);
+  document.getElementById('total-chip').textContent = `${list.length} business actif${list.length !== 1 ? 's' : ''}`;
+  if (list && list.length) {
+    loadDashStats(list);
+    document.getElementById('dash-chart-card').style.display = 'block';
+    requestAnimationFrame(() => drawDashChart(list));
+  }
+  renderBiz(list);
+}
+
+async function loadDashStats(list) {
+  // Utilise les données déjà en cache si disponibles
+  let tv = 0, td = 0;
+  const toFetch = [];
+  for (const b of list) {
+    const cached = cache.getTx(b.id);
+    if (cached) {
+      cached.forEach(t => { tv += +t.versement || 0; td += +t.depense || 0; });
+    } else {
+      toFetch.push(b);
+    }
+  }
+  if (toFetch.length > 0) {
+    const results = await Promise.all(
+      toFetch.map(b => api({ action: 'getTransactions', business_id: b.id }).catch(() => ({ success: false, data: [] })))
+    );
+    results.forEach((r, i) => {
+      if (r.success) {
+        cache.setTx(toFetch[i].id, r.data);
+        r.data.forEach(t => { tv += +t.versement || 0; td += +t.depense || 0; });
+      }
+    });
+  }
+  document.getElementById('dash-sv').textContent = fmtM(tv);
+  document.getElementById('dash-sd').textContent = fmtM(td);
+  document.getElementById('dash-sb').textContent = fmtM(tv - td);
+  document.getElementById('dash-stats-row').style.display = 'grid';
+}
+
+function drawDashChart(list) {
+  const canvas = document.getElementById('dash-chart');
+  if (!canvas || !list.length) return;
+  if (window._dashChartInstance) window._dashChartInstance.destroy();
+  const labels   = list.map(b => b.nom);
+  const soldes   = list.map(b => parseFloat(b.solde) || 0);
+  const bgColors = soldes.map(v => v >= 0 ? '#1D9E75CC' : '#dc2626CC');
+  const bdColors = soldes.map(v => v >= 0 ? '#1D9E75' : '#dc2626');
+  let cumul = 0;
+  const trendData = soldes.map(v => { cumul += v; return cumul; });
+  window._dashChartInstance = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { type:'bar', label:'Solde', data:soldes, backgroundColor:bgColors, borderColor:bdColors, borderWidth:1.5, borderRadius:10, borderSkipped:false, order:2, yAxisID:'y' },
+        { type:'line', label:'Tendance cumulée', data:trendData, borderColor:'#b8960c', borderWidth:2.5, pointBackgroundColor:'#b8960c', pointBorderColor:'#fff', pointBorderWidth:2, pointRadius:5, pointHoverRadius:7, tension:0.4, fill:false, order:1, yAxisID:'y2' }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      interaction:{ mode:'index', intersect:false },
+      plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label:ctx => ctx.dataset.label+' : '+new Intl.NumberFormat('fr-FR').format(ctx.raw)+' FCFA' } } },
+      scales:{
+        x:{ grid:{ display:false }, ticks:{ font:{ size:12, family:"'Outfit',sans-serif" }, color:'#9a8e72', autoSkip:false }, border:{ display:false } },
+        y:{ position:'left', grid:{ color:'rgba(180,150,60,.07)' }, ticks:{ font:{ size:11 }, color:'#9a8e72', callback:v=>{ const a=Math.abs(v),s=v<0?'-':''; return a>=1e6?s+(a/1e6).toFixed(1)+'M':a>=1e3?s+(a/1e3).toFixed(0)+'K':s+a; } }, border:{ display:false } },
+        y2:{ position:'right', grid:{ drawOnChartArea:false }, ticks:{ font:{ size:11 }, color:'#b8960c', callback:v=>{ const a=Math.abs(v),s=v<0?'-':''; return a>=1e6?s+(a/1e6).toFixed(1)+'M':a>=1e3?s+(a/1e3).toFixed(0)+'K':s+a; } }, border:{ display:false } }
+      }
+    }
+  });
+}
+
+function animateNumber(el, target) {
+  if (!el) return;
+  const dur = 600, t0 = performance.now();
+  const tick = now => {
+    const p = Math.min((now - t0) / dur, 1);
+    el.textContent = fmtM(Math.floor((1 - Math.pow(1 - p, 3)) * target));
+    if (p < 1) requestAnimationFrame(tick);
+    else el.textContent = fmtM(target);
+  };
+  requestAnimationFrame(tick);
+}
+
+function renderBiz(list) {
+  const g = document.getElementById('biz-grid');
+  const isAdmin = user.role === 'admin';
+  if (!list || !list.length) { g.innerHTML = '<div class="empty-state">Aucun business. Commencez par en ajouter un !</div>'; return; }
+  g.innerHTML = list.map((b, i) => {
+    const col  = BIZ_COLORS[i % BIZ_COLORS.length];
+    const icon = BIZ_ICONS[i % BIZ_ICONS.length].replace(/{s}/g, col.iconStroke);
+    const bStr = JSON.stringify(b).replace(/'/g, "&#39;");
+    const trend = b.solde > 0 ? { cls:'up', icon:'↑', label:'Positif' } : b.solde < 0 ? { cls:'down', icon:'↓', label:'Négatif' } : { cls:'flat', icon:'–', label:'Neutre' };
+    return `
+    <div class="biz-card" style="animation-delay:${i * .06}s" onclick='openBiz(${bStr})'>
+      <div class="biz-card-accent" style="background:${col.accent};"></div>
+      <div class="biz-card-body">
+        <div class="biz-card-top">
+          <div class="biz-icon" style="background:${col.iconBg};">${icon}</div>
+          <div class="biz-card-actions" onclick="event.stopPropagation()">
+            <div class="biz-btn eye" title="Aperçu" onclick='showBizPanel(${bStr})'><svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="#2563eb" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
+            ${isAdmin ? `
+            <div class="biz-btn" onclick='openEditBizFromCard(${bStr})'><svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
+            <div class="biz-btn del" onclick='confirmDeleteBizById("${b.id}","${b.nom}")'><svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></div>` : ''}
+          </div>
+        </div>
+        <div class="biz-name">${b.nom}</div>
+        <div class="biz-desc">${b.description || 'Aucune description'}</div>
+        <div class="biz-sep"></div>
+        <div class="biz-solde-lbl">Solde en caisse</div>
+        <div class="biz-solde${b.solde < 0 ? ' neg' : ''}">${fmtM(b.solde)}</div>
+        <div class="biz-footer">
+          <span class="trend ${trend.cls}">${trend.icon} ${trend.label}</span>
+          <div style="display:flex;align-items:center;gap:3px;font-size:11px;font-weight:600;color:${col.accent};">Ouvrir <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="${col.accent}" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  SHOW BUSINESS — Side Panel
+// ═══════════════════════════════════════════════════════════
+async function showBizPanel(b) {
+  spCurrentBiz = b;
+  document.getElementById('sp-biz-name').textContent  = b.nom;
+  document.getElementById('sp-biz-desc').textContent  = b.description || '';
+  document.getElementById('sp-biz-solde').textContent = fmtM(b.solde);
+  document.getElementById('sp-biz-solde').className   = 'sp-solde' + (b.solde < 0 ? ' neg' : '');
+  document.getElementById('sp-biz-v').textContent     = '…';
+  document.getElementById('sp-biz-d').textContent     = '…';
+  document.getElementById('sp-biz-nb').textContent    = '…';
+  document.getElementById('sp-biz-b').textContent     = '…';
+  document.getElementById('sp-biz-tx').innerHTML      = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px;">Chargement…</div>';
+  document.getElementById('sp-biz-ov').classList.add('open');
+
+  // Charger les transactions (cache ou API)
+  let txData = cache.getTx(b.id);
+  if (!txData) {
+    try {
+      const r = await api({ action: 'getTransactions', business_id: b.id });
+      if (r.success) { cache.setTx(b.id, r.data); txData = r.data; }
+    } catch { }
+  }
+  if (!txData) return;
+
+  const tv = txData.reduce((s, t) => s + (+t.versement || 0), 0);
+  const td = txData.reduce((s, t) => s + (+t.depense || 0), 0);
+  document.getElementById('sp-biz-v').textContent  = fmtM(tv);
+  document.getElementById('sp-biz-d').textContent  = fmtM(td);
+  document.getElementById('sp-biz-nb').textContent = txData.length;
+  document.getElementById('sp-biz-b').textContent  = fmtM(tv - td);
+
+  // Dernières 5 transactions
+  const last5 = [...txData].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
+  if (!last5.length) {
+    document.getElementById('sp-biz-tx').innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;">Aucune transaction</div>';
+    return;
+  }
+  document.getElementById('sp-biz-tx').innerHTML = last5.map(t => `
+    <div class="sp-tx-item">
+      <div>
+        <div class="sp-tx-obj">${t.objet || '—'}</div>
+        <div class="sp-tx-date">${fmtD(t.date)}</div>
+      </div>
+      ${+t.versement > 0 ? `<div class="sp-tx-val v">+${fmtM(t.versement)}</div>` : `<div class="sp-tx-val d">-${fmtM(t.depense)}</div>`}
+    </div>`).join('');
+}
+
+function closeSidePanel(e) {
+  if (e.target === document.getElementById('sp-biz-ov')) {
+    document.getElementById('sp-biz-ov').classList.remove('open');
+  }
+}
+
+function openBizFromPanel() {
+  document.getElementById('sp-biz-ov').classList.remove('open');
+  if (spCurrentBiz) openBiz(spCurrentBiz);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  SHOW TRANSACTION — Modal
+// ═══════════════════════════════════════════════════════════
+function showTx(t) {
+  showTxCurrent = t;
+  document.getElementById('show-tx-sub').textContent = biz ? biz.nom : '';
+  const type = +t.versement > 0 && +t.depense > 0 ? 'mixed' : +t.versement > 0 ? 'v' : 'd';
+  const typeLabel = type === 'v' ? 'Versement' : type === 'd' ? 'Dépense' : 'Mixte';
+  document.getElementById('show-tx-body').innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;">
+      <span class="tx-show-badge ${type}">${typeLabel}</span>
+      <span style="font-size:11px;color:var(--muted);">ID: ${t.id}</span>
+    </div>
+    <div class="grid2">
+      <div class="tx-show-field"><div class="tx-show-lbl">Date</div><div class="tx-show-val">${fmtD(t.date)}</div></div>
+      <div class="tx-show-field"><div class="tx-show-lbl">Enregistré par</div><div class="tx-show-val">${t.created_by || '—'}</div></div>
+    </div>
+    <div class="tx-show-field"><div class="tx-show-lbl">Objet</div><div class="tx-show-val" style="font-size:16px;font-weight:600;">${t.objet || '—'}</div></div>
+    <div class="grid2">
+      ${+t.versement > 0 ? `<div class="tx-show-field"><div class="tx-show-lbl">Versement</div><div class="tx-show-val big green">+${fmtM(t.versement)}</div></div>` : ''}
+      ${+t.depense > 0  ? `<div class="tx-show-field"><div class="tx-show-lbl">Dépense</div><div class="tx-show-val big red">-${fmtM(t.depense)}</div></div>` : ''}
+    </div>
+    <div class="tx-show-field"><div class="tx-show-lbl">Solde après</div><div class="tx-show-val big ${t.solde < 0 ? 'red' : 'gold'}">${fmtM(t.solde)}</div></div>
+    ${t.observation ? `<div class="tx-show-field"><div class="tx-show-lbl">Observation</div><div class="tx-show-val" style="color:var(--muted);">${t.observation}</div></div>` : ''}
+  `;
+  document.getElementById('mo-show-tx').classList.add('open');
+}
+
+function editTxFromShow() {
+  closeMo('mo-show-tx');
+  if (showTxCurrent) editTx(showTxCurrent);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  DETAIL
+// ═══════════════════════════════════════════════════════════
+async function openBiz(b) {
+  biz = b; allTx = [];
+  const isAdmin = user.role === 'admin';
+  document.getElementById('det-name').textContent  = b.nom;
+  document.getElementById('det-desc').textContent  = b.description || '';
+  document.getElementById('det-solde').textContent = fmtM(b.solde);
+  document.getElementById('det-solde').className   = 'det-solde' + (b.solde < 0 ? ' neg' : '');
+  document.getElementById('det-admin-btns').style.display = isAdmin ? 'flex' : 'none';
+  document.getElementById('s-v').textContent = '—'; document.getElementById('s-d').textContent = '—'; document.getElementById('s-b').textContent = '—';
+  document.getElementById('f-deb').value = ''; document.getElementById('f-fin').value = ''; document.getElementById('f-search').value = '';
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  document.querySelector('.chip').classList.add('active');
+  sortCol = 'date'; sortDir = -1; updateSortUI();
+  ['home', 'users', 'profile'].forEach(t => document.getElementById('tab-' + t)?.classList.remove('active'));
+  ['v-home', 'v-users', 'v-profile'].forEach(v => document.getElementById(v).style.display = 'none');
+  document.getElementById('v-detail').style.display = 'block';
+
+  // Skeleton dans la table
+  document.getElementById('tx-body').innerHTML = '<tr><td colspan="8" class="empty-state"><div style="display:flex;align-items:center;justify-content:center;gap:8px;"><div class="skel" style="width:20px;height:20px;border-radius:50%;"></div>Chargement…</div></td></tr>';
+
+  await loadTx();
+}
+
+async function loadTx(forceRefresh = false) {
+  if (!biz) return;
+  if (!forceRefresh) {
+    const cached = cache.getTx(biz.id);
+    if (cached) {
+      allTx = [...cached].sort((a, b) => new Date(b.date) - new Date(a.date));
+      applyLocalFilter();
+      requestAnimationFrame(() => buildDetChart(allTx));
+      return;
+    }
+  }
+  try {
+    const r = await api({ action: 'getTransactions', business_id: biz.id });
+    if (r.success) {
+      cache.setTx(biz.id, r.data);
+      allTx = [...r.data].sort((a, b) => new Date(b.date) - new Date(a.date));
+      applyLocalFilter();
+      requestAnimationFrame(() => buildDetChart(allTx));
+    }
+  } catch { toast('Erreur chargement transactions', 'err'); }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MULTI-ENREGISTREMENT
+// ═══════════════════════════════════════════════════════════
+function openMultiTx() {
+  document.getElementById('multi-count-input').value = '';
+  document.getElementById('multi-start-sub').textContent = biz ? biz.nom : '';
+  document.getElementById('mo-multi-start').classList.add('open');
+}
+
+function startMultiEntry() {
+  const val = document.getElementById('multi-count-input').value;
+  multiTotal   = val ? parseInt(val) : null;
+  multiEntries = [];
+  multiCurrent = 0;
+  closeMo('mo-multi-start');
+  showMultiEntryStep();
+}
+
+function showMultiEntryStep() {
+  const step    = multiCurrent + 1;
+  const total   = multiTotal ? multiTotal : '∞';
+  const pct     = multiTotal ? (multiCurrent / multiTotal) * 100 : 0;
+
+  document.getElementById('multi-entry-title').textContent = `Entrée ${step}`;
+  document.getElementById('multi-entry-sub').textContent   = biz ? biz.nom : '';
+  document.getElementById('mp-cur').textContent            = step;
+  document.getElementById('mp-tot').textContent            = total;
+  document.getElementById('mp-step-lbl').textContent       = `${step} / ${total}`;
+  document.getElementById('mp-bar').style.width            = pct + '%';
+
+  // Pré-remplir la date d'aujourd'hui si nouvelle entrée
+  if (!document.getElementById('me-date').value) {
+    document.getElementById('me-date').value = new Date().toISOString().split('T')[0];
+  }
+  // Vider les champs de saisie
+  document.getElementById('me-obj').value = '';
+  document.getElementById('me-v').value   = '';
+  document.getElementById('me-d').value   = '';
+  document.getElementById('me-obs').value = '';
+
+  document.getElementById('mo-multi-entry').classList.add('open');
+  setTimeout(() => document.getElementById('me-obj').focus(), 100);
+}
+
+function collectCurrentEntry() {
+  const date = document.getElementById('me-date').value;
+  const obj  = document.getElementById('me-obj').value.trim();
+  const v    = document.getElementById('me-v').value;
+  const d    = document.getElementById('me-d').value;
+  const obs  = document.getElementById('me-obs').value.trim();
+  if (!date || !obj) { toast('Date et objet sont obligatoires', 'err'); return null; }
+  if ((!v || +v === 0) && (!d || +d === 0)) { toast('Versement ou dépense requis', 'err'); return null; }
+  if ((v && +v < 0) || (d && +d < 0)) { toast('Les montants doivent être positifs', 'err'); return null; }
+  return { date, objet: obj, versement: +v || 0, depense: +d || 0, observation: obs };
+}
+
+function multiEntryNext() {
+  const entry = collectCurrentEntry();
+  if (!entry) return;
+  multiEntries[multiCurrent] = entry;
+  multiCurrent++;
+
+  // Si on atteint le nombre cible → aller au récap
+  if (multiTotal && multiCurrent >= multiTotal) {
+    closeMo('mo-multi-entry');
+    showMultiRecap();
+    return;
+  }
+  showMultiEntryStep();
+}
+
+function multiEntryDone() {
+  if (multiEntries.length === 0) {
+    // Essayer de collecter l'entrée courante
+    const entry = collectCurrentEntry();
+    if (entry) multiEntries[multiCurrent] = entry;
+    if (multiEntries.filter(Boolean).length === 0) {
+      toast('Aucune entrée saisie', 'err'); return;
+    }
+  } else {
+    // Optionnellement sauvegarder l'entrée courante si remplie
+    const obj = document.getElementById('me-obj').value.trim();
+    if (obj) {
+      const entry = collectCurrentEntry();
+      if (entry) multiEntries[multiCurrent] = entry;
+    }
+  }
+  closeMo('mo-multi-entry');
+  showMultiRecap();
+}
+
+function showMultiRecap() {
+  const entries = multiEntries.filter(Boolean);
+  if (!entries.length) { toast('Aucune entrée à valider', 'err'); return; }
+
+  document.getElementById('recap-sub').textContent = `${entries.length} entrée${entries.length > 1 ? 's' : ''} — ${biz ? biz.nom : ''}`;
+
+  const rows = entries.map((e, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td>${fmtD(e.date)}</td>
+      <td><strong>${e.objet}</strong></td>
+      <td class="${e.versement > 0 ? 'v-cell' : ''}">${e.versement > 0 ? '+' + fmtM(e.versement) : '—'}</td>
+      <td class="${e.depense > 0 ? 'd-cell' : ''}">${e.depense > 0 ? '-' + fmtM(e.depense) : '—'}</td>
+      <td style="color:var(--muted);font-size:11px;">${e.observation || '—'}</td>
+    </tr>`).join('');
+
+  document.getElementById('recap-table-wrap').innerHTML = `
+    <div style="overflow-x:auto;margin-bottom:16px;">
+      <table class="recap-table">
+        <thead><tr><th>#</th><th>Date</th><th>Objet</th><th>Versement</th><th>Dépense</th><th>Obs.</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+
+  const tv = entries.reduce((s, e) => s + e.versement, 0);
+  const td = entries.reduce((s, e) => s + e.depense, 0);
+  document.getElementById('recap-total').innerHTML = `
+    <div class="recap-total-item"><div class="recap-total-lbl">Versements</div><div class="recap-total-val g">${fmtM(tv)}</div></div>
+    <div class="recap-total-item"><div class="recap-total-lbl">Dépenses</div><div class="recap-total-val r">${fmtM(td)}</div></div>
+    <div class="recap-total-item"><div class="recap-total-lbl">Net</div><div class="recap-total-val o">${fmtM(tv - td)}</div></div>
+    <div class="recap-total-item"><div class="recap-total-lbl">Entrées</div><div class="recap-total-val">${entries.length}</div></div>`;
+
+  document.getElementById('mo-multi-recap').classList.add('open');
+}
+
+function backToMultiEntry() {
+  closeMo('mo-multi-recap');
+  // Revenir à la dernière entrée saisie
+  if (multiCurrent > 0) multiCurrent = multiEntries.filter(Boolean).length - 1;
+  showMultiEntryStep();
+  // Repopuler le dernier formulaire
+  const last = multiEntries[multiCurrent];
+  if (last) {
+    document.getElementById('me-date').value = last.date;
+    document.getElementById('me-obj').value  = last.objet;
+    document.getElementById('me-v').value    = last.versement || '';
+    document.getElementById('me-d').value    = last.depense || '';
+    document.getElementById('me-obs').value  = last.observation || '';
+  }
+}
+
+async function submitMultiTx() {
+  const entries = multiEntries.filter(Boolean);
+  if (!entries.length || !biz) return;
+
+  const btn = document.getElementById('btn-recap-confirm');
+  btn.disabled = true; btn.textContent = 'Envoi…';
+  document.getElementById('warmup-bar').classList.add('show');
+
+  let success = 0, fail = 0;
+  // Envoi séquentiel pour respect de l'ordre des soldes
+  for (const e of entries) {
+    try {
+      const r = await api({
+        action: 'addTransaction',
+        business_id: biz.id,
+        date: e.date,
+        objet: e.objet,
+        versement: e.versement,
+        depense: e.depense,
+        observation: e.observation
+      });
+      if (r.success) {
+        success++;
+        biz.solde = r.solde;
+      } else fail++;
+    } catch { fail++; }
+  }
+
+  document.getElementById('warmup-bar').classList.remove('show');
+  btn.disabled = false; btn.textContent = '✓ Valider tout';
+
+  closeMo('mo-multi-recap');
+  cache.clear();
+
+  // Mettre à jour l'affichage du solde
+  document.getElementById('det-solde').textContent = fmtM(biz.solde);
+  document.getElementById('det-solde').className   = 'det-solde' + (biz.solde < 0 ? ' neg' : '');
+
+  if (fail === 0) {
+    toast(`${success} entrée${success > 1 ? 's' : ''} enregistrée${success > 1 ? 's' : ''} ✓`, 'ok');
+  } else {
+    toast(`${success} réussie(s), ${fail} échouée(s)`, fail === entries.length ? 'err' : 'ok');
+  }
+
+  // Reset état multi
+  multiEntries = []; multiTotal = null; multiCurrent = 0;
+  await loadTx(true);
+}
+
+function cancelMulti() {
+  closeMo('mo-multi-start');
+  closeMo('mo-multi-entry');
+  closeMo('mo-multi-recap');
+  multiEntries = []; multiTotal = null; multiCurrent = 0;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  GRAPHIQUES
+// ═══════════════════════════════════════════════════════════
+function drawLineChart(canvas, data, color) {
+  if (!canvas || !data.length) return;
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.offsetWidth || canvas.parentElement?.offsetWidth || 600;
+  const H = 140;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  const ctx = canvas.getContext('2d'); ctx.scale(dpr, dpr); ctx.clearRect(0, 0, W, H);
+  const pad = { t:10, r:10, b:28, l:62 }, iw = W - pad.l - pad.r, ih = H - pad.t - pad.b;
+  const vals = data.map(d => d.solde), min = Math.min(...vals, 0), max = Math.max(...vals, 0), range = max - min || 1;
+  const xOf = i => pad.l + (i / (data.length - 1 || 1)) * iw;
+  const yOf = v => pad.t + ih - ((v - min) / range) * ih;
+  ctx.strokeStyle = 'rgba(180,150,60,.1)'; ctx.lineWidth = 1;
+  for (let g = 0; g <= 4; g++) {
+    const y = pad.t + (g / 4) * ih;
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + iw, y); ctx.stroke();
+    ctx.fillStyle = '#9a8e72'; ctx.font = '9px Outfit,sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText(fmtShort(max - (g / 4) * range), pad.l - 6, y + 3);
+  }
+  if (data.length > 1) {
+    const grad = ctx.createLinearGradient(0, pad.t, 0, pad.t + ih);
+    grad.addColorStop(0, color + '33'); grad.addColorStop(1, color + '00');
+    ctx.beginPath(); ctx.moveTo(xOf(0), yOf(vals[0]));
+    data.forEach((d, i) => { if (i > 0) ctx.lineTo(xOf(i), yOf(d.solde)); });
+    ctx.lineTo(xOf(data.length - 1), pad.t + ih); ctx.lineTo(xOf(0), pad.t + ih); ctx.closePath();
+    ctx.fillStyle = grad; ctx.fill();
+    ctx.beginPath(); ctx.moveTo(xOf(0), yOf(vals[0]));
+    data.forEach((d, i) => { if (i > 0) ctx.lineTo(xOf(i), yOf(d.solde)); });
+    ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.stroke();
+  }
+  const step = Math.max(1, Math.floor(data.length / 5));
+  data.forEach((d, i) => {
+    ctx.beginPath(); ctx.arc(xOf(i), yOf(d.solde), 3, 0, Math.PI * 2);
+    ctx.fillStyle = color; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+    if (i % step === 0 || i === data.length - 1) {
+      ctx.fillStyle = '#9a8e72'; ctx.font = '9px Outfit,sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(fmtD(d.date, true), xOf(i), H - 6);
+    }
+  });
+  if (min < 0 && max > 0) {
+    ctx.strokeStyle = 'rgba(220,38,38,.3)'; ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
+    ctx.beginPath(); ctx.moveTo(pad.l, yOf(0)); ctx.lineTo(pad.l + iw, yOf(0)); ctx.stroke(); ctx.setLineDash([]);
+  }
+}
+
+function buildDetChart(txList) {
+  drawLineChart(document.getElementById('det-chart'), [...txList].sort((a, b) => new Date(a.date) - new Date(b.date)), '#b8960c');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  FILTRES
+// ═══════════════════════════════════════════════════════════
+function getDateRange(q) {
+  const now = new Date(), fmt = d => d.toISOString().split('T')[0];
+  const mon = d => { const dd = new Date(d); dd.setDate(dd.getDate() - ((dd.getDay() + 6) % 7)); return dd; };
+  switch (q) {
+    case 'today':            return { deb: fmt(now), fin: fmt(now) };
+    case 'yesterday':        { const y = new Date(now); y.setDate(y.getDate() - 1); return { deb: fmt(y), fin: fmt(y) }; }
+    case 'before_yesterday': { const y = new Date(now); y.setDate(y.getDate() - 2); return { deb: fmt(y), fin: fmt(y) }; }
+    case 'week':             { const m = mon(now); return { deb: fmt(m), fin: fmt(now) }; }
+    case 'last_week':        { const m = mon(now); m.setDate(m.getDate() - 7); const e = new Date(m); e.setDate(e.getDate() + 6); return { deb: fmt(m), fin: fmt(e) }; }
+    case 'month':            { const m = new Date(now.getFullYear(), now.getMonth(), 1); return { deb: fmt(m), fin: fmt(now) }; }
+    case 'last_month':       { const f = new Date(now.getFullYear(), now.getMonth() - 1, 1); const l = new Date(now.getFullYear(), now.getMonth(), 0); return { deb: fmt(f), fin: fmt(l) }; }
+    case 'quarter':          { const q2 = Math.floor(now.getMonth() / 3); const f = new Date(now.getFullYear(), q2 * 3, 1); return { deb: fmt(f), fin: fmt(now) }; }
+    case 'year':             { const f = new Date(now.getFullYear(), 0, 1); return { deb: fmt(f), fin: fmt(now) }; }
+    default:                 return { deb: '', fin: '' };
+  }
+}
+function setQuick(q, el) { document.querySelectorAll('.chip').forEach(c => c.classList.remove('active')); el.classList.add('active'); const { deb, fin } = getDateRange(q); document.getElementById('f-deb').value = deb; document.getElementById('f-fin').value = fin; applyLocalFilter(); }
+function onManualDate() { document.querySelectorAll('.chip').forEach(c => c.classList.remove('active')); applyLocalFilter(); }
+function resetFilter() { document.getElementById('f-deb').value = ''; document.getElementById('f-fin').value = ''; document.getElementById('f-search').value = ''; document.querySelectorAll('.chip').forEach(c => c.classList.remove('active')); document.querySelector('.chip').classList.add('active'); applyLocalFilter(); }
+function getFiltered() {
+  const deb = document.getElementById('f-deb').value, fin = document.getElementById('f-fin').value;
+  const q = (document.getElementById('f-search').value || '').toLowerCase().trim();
+  return allTx.filter(t => {
+    if (deb && t.date < deb) return false;
+    if (fin && t.date > fin) return false;
+    if (q && !(t.objet?.toLowerCase().includes(q) || t.observation?.toLowerCase().includes(q))) return false;
+    return true;
+  });
+}
+function applyLocalFilter() {
+  let f = getFiltered();
+  f.sort((a, b) => {
+    let va = a[sortCol] || 0, vb = b[sortCol] || 0;
+    if (sortCol === 'date') { va = a.date || ''; vb = b.date || ''; }
+    if (sortCol === 'objet') { va = (a.objet || '').toLowerCase(); vb = (b.objet || '').toLowerCase(); }
+    if (va < vb) return -sortDir; if (va > vb) return sortDir; return 0;
+  });
+  renderTx(f); updateStats(f);
+}
+function sortTable(col) { if (sortCol === col) sortDir *= -1; else { sortCol = col; sortDir = -1; } updateSortUI(); applyLocalFilter(); }
+function updateSortUI() {
+  document.querySelectorAll('th').forEach(th => { th.classList.remove('sorted'); const a = th.querySelector('.sort-arrow'); if (a) a.textContent = '↕'; });
+  const th = document.getElementById('th-' + sortCol);
+  if (th) { th.classList.add('sorted'); const a = th.querySelector('.sort-arrow'); if (a) a.textContent = sortDir === -1 ? '↓' : '↑'; }
+}
+
+function renderTx(list) {
+  const tb = document.getElementById('tx-body'), isAdmin = user.role === 'admin';
+  document.getElementById('tbl-count').textContent = list.length + ' transaction' + (list.length !== 1 ? 's' : '');
+  if (!list.length) { tb.innerHTML = '<tr><td colspan="8" class="empty-state">Aucune transaction trouvée.</td></tr>'; return; }
+  tb.innerHTML = list.map(t => `
+    <tr style="cursor:pointer;" onclick='showTx(${JSON.stringify(t).replace(/'/g,"&#39;")})'>
+      <td class="td-date">${fmtD(t.date)}</td>
+      <td><strong style="color:var(--text)">${t.objet || '—'}</strong></td>
+      <td class="td-v">${+t.versement > 0 ? '+' + fmtM(t.versement) : '—'}</td>
+      <td class="td-d">${+t.depense > 0 ? '-' + fmtM(t.depense) : '—'}</td>
+      <td class="td-s${t.solde < 0 ? ' neg' : ''}">${fmtM(t.solde)}</td>
+      <td class="td-obs" title="${t.observation || ''}">${t.observation || '—'}</td>
+      <td class="td-by">${t.created_by || '—'}</td>
+      <td><div class="td-actions" onclick="event.stopPropagation()">
+        <button class="btn-sm info" onclick='showTx(${JSON.stringify(t).replace(/'/g,"&#39;")})' title="Voir">
+          <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+        <button class="btn-sm" onclick='editTx(${JSON.stringify(t).replace(/'/g,"&#39;")})' title="Modifier">
+          <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+        ${isAdmin ? `<button class="btn-sm danger" onclick='confirmDeleteTx("${t.id}")' title="Supprimer">
+          <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+        </button>` : ''}
+      </div></td>
+    </tr>`).join('');
+}
+function updateStats(list) {
+  const tv = list.reduce((s, t) => s + (+t.versement || 0), 0), td = list.reduce((s, t) => s + (+t.depense || 0), 0);
+  document.getElementById('s-v').textContent = fmtM(tv);
+  document.getElementById('s-d').textContent = fmtM(td);
+  document.getElementById('s-b').textContent = fmtM(tv - td);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  BUSINESS CRUD
+// ═══════════════════════════════════════════════════════════
+function openMoBiz() {
+  if (user.role !== 'admin') { toast('Accès réservé aux administrateurs', 'err'); return; }
+  document.getElementById('b-nom').value = ''; document.getElementById('b-desc').value = '';
+  document.getElementById('mo-biz-title').textContent = 'Nouveau Business';
+  document.getElementById('btn-b').textContent = 'Créer'; document.getElementById('btn-b').dataset.mode = 'add';
+  document.getElementById('mo-biz').classList.add('open');
+}
+function openEditBiz() {
+  if (user.role !== 'admin') return;
+  document.getElementById('b-nom').value = biz.nom || ''; document.getElementById('b-desc').value = biz.description || '';
+  document.getElementById('mo-biz-title').textContent = 'Modifier le Business';
+  document.getElementById('btn-b').textContent = 'Enregistrer'; document.getElementById('btn-b').dataset.mode = 'edit';
+  document.getElementById('mo-biz').classList.add('open');
+}
+function openEditBizFromCard(b) { if (user.role !== 'admin') return; biz = b; openEditBiz(); }
+async function submitBiz() {
+  if (user.role !== 'admin') { toast('Accès refusé', 'err'); return; }
+  const nom = document.getElementById('b-nom').value.trim(), desc = document.getElementById('b-desc').value.trim();
+  const mode = document.getElementById('btn-b').dataset.mode || 'add';
+  if (!nom) { toast('Le nom est obligatoire', 'err'); return; }
+  const btn = document.getElementById('btn-b'); btn.disabled = true; btn.textContent = '…';
+  try {
+    const r = mode === 'edit' ? await api({ action:'updateBusiness', id:biz.id, nom, description:desc }) : await api({ action:'addBusiness', nom, description:desc });
+    if (r.success) {
+      closeMo('mo-biz'); cache.clear();
+      toast(mode === 'edit' ? 'Business modifié !' : 'Business créé !', 'ok');
+      if (mode === 'edit') { biz.nom = nom; biz.description = desc; document.getElementById('det-name').textContent = nom; document.getElementById('det-desc').textContent = desc; }
+      loadHome();
+    } else toast('Erreur : ' + r.message, 'err');
+  } catch { toast('Erreur réseau', 'err'); }
+  btn.disabled = false; btn.textContent = mode === 'edit' ? 'Enregistrer' : 'Créer';
+}
+function confirmDeleteBiz() { if (user.role !== 'admin') return; confirmDeleteBizById(biz.id, biz.nom); }
+function confirmDeleteBizById(id, nom) {
+  if (user.role !== 'admin') return;
+  document.getElementById('confirm-title').textContent = 'Supprimer ce business ?';
+  document.getElementById('confirm-msg').textContent = `Vous êtes sur le point de supprimer "${nom}" et TOUTES ses transactions. Cette action est irréversible.`;
+  document.getElementById('btn-confirm').onclick = async () => {
+    closeMo('mo-confirm');
+    const r = await api({ action:'deleteBusiness', id }).catch(() => null);
+    if (r?.success) { cache.clear(); toast('Business supprimé', 'ok'); goTab('home'); } else toast('Erreur suppression', 'err');
+  };
+  document.getElementById('mo-confirm').classList.add('open');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  TRANSACTIONS CRUD
+// ═══════════════════════════════════════════════════════════
+function openMoTx() {
+  document.getElementById('t-id').value = ''; document.getElementById('t-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('t-obj').value = ''; document.getElementById('t-v').value = '';
+  document.getElementById('t-d').value = ''; document.getElementById('t-obs').value = '';
+  document.getElementById('mo-tx-title').textContent = 'Nouvelle Entrée';
+  document.getElementById('mo-tx-sub').textContent = biz ? biz.nom : '';
+  document.getElementById('btn-tx').textContent = 'Enregistrer';
+  document.getElementById('mo-tx').classList.add('open');
+}
+function editTx(t) {
+  document.getElementById('t-id').value = t.id || ''; document.getElementById('t-date').value = t.date || '';
+  document.getElementById('t-obj').value = t.objet || ''; document.getElementById('t-v').value = t.versement || '';
+  document.getElementById('t-d').value = t.depense || ''; document.getElementById('t-obs').value = t.observation || '';
+  document.getElementById('mo-tx-title').textContent = "Modifier l'entrée";
+  document.getElementById('mo-tx-sub').textContent = biz ? biz.nom : '';
+  document.getElementById('btn-tx').textContent = 'Modifier';
+  document.getElementById('mo-tx').classList.add('open');
+}
+async function submitTx() {
+  const id = document.getElementById('t-id').value, date = document.getElementById('t-date').value;
+  const obj = document.getElementById('t-obj').value.trim(), v = document.getElementById('t-v').value;
+  const d = document.getElementById('t-d').value, obs = document.getElementById('t-obs').value.trim();
+  if (!date || !obj) { toast('Date et objet sont obligatoires', 'err'); return; }
+  if ((!v || +v === 0) && (!d || +d === 0)) { toast('Versement ou dépense requis', 'err'); return; }
+  if ((v && +v < 0) || (d && +d < 0)) { toast('Les montants doivent être positifs', 'err'); return; }
+  const btn = document.getElementById('btn-tx'); btn.disabled = true; btn.textContent = '…';
+  try {
+    const params = { action: id ? 'updateTransaction' : 'addTransaction', business_id:biz.id, date, objet:obj, versement:v||0, depense:d||0, observation:obs };
+    if (id) params.id = id;
+    const r = await api(params);
+    if (r.success) {
+      closeMo('mo-tx'); cache.clear();
+      toast((id ? 'Entrée modifiée' : 'Entrée enregistrée') + ' — Solde : ' + fmtM(r.solde), 'ok');
+      biz.solde = r.solde;
+      document.getElementById('det-solde').textContent = fmtM(r.solde);
+      document.getElementById('det-solde').className   = 'det-solde' + (r.solde < 0 ? ' neg' : '');
+      await loadTx(true);
+    } else toast('Erreur : ' + r.message, 'err');
+  } catch { toast('Erreur réseau', 'err'); }
+  btn.disabled = false; btn.textContent = id ? 'Modifier' : 'Enregistrer';
+}
+function confirmDeleteTx(id) {
+  if (user.role !== 'admin') { toast('Seuls les admins peuvent supprimer', 'err'); return; }
+  document.getElementById('confirm-title').textContent = 'Supprimer cette transaction ?';
+  document.getElementById('confirm-msg').textContent = 'Cette action est irréversible. Le solde sera recalculé automatiquement.';
+  document.getElementById('btn-confirm').onclick = async () => {
+    closeMo('mo-confirm');
+    const r = await api({ action:'deleteTransaction', id, business_id:biz.id }).catch(() => null);
+    if (r?.success) {
+      cache.clear(); toast('Transaction supprimée', 'ok');
+      biz.solde = r.solde;
+      document.getElementById('det-solde').textContent = fmtM(r.solde);
+      document.getElementById('det-solde').className   = 'det-solde' + (r.solde < 0 ? ' neg' : '');
+      await loadTx(true);
+    } else toast('Erreur suppression', 'err');
+  };
+  document.getElementById('mo-confirm').classList.add('open');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  USERS CRUD
+// ═══════════════════════════════════════════════════════════
+async function loadUsers() {
+  if (user.role !== 'admin') { document.getElementById('users-grid').innerHTML = '<div class="empty-state">Accès réservé.</div>'; return; }
+  document.getElementById('users-grid').innerHTML = '<div class="empty-state">Chargement…</div>';
+  try { const r = await api({ action:'getUsers' }); if (r.success) renderUsers(r.data); }
+  catch { document.getElementById('users-grid').innerHTML = '<div class="empty-state">Erreur réseau</div>'; }
+}
+function renderUsers(list) {
+  const g = document.getElementById('users-grid');
+  if (!list.length) { g.innerHTML = '<div class="empty-state">Aucun membre</div>'; return; }
+  g.innerHTML = list.map((u, i) => `
+    <div class="user-card" style="animation-delay:${i * .06}s">
+      <div class="user-av">${u.nom ? u.nom[0].toUpperCase() : '?'}</div>
+      <div class="user-name">${u.nom || '—'}</div>
+      <div class="user-num">${u.numero || '—'}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;">
+        <span class="role-badge ${u.role === 'admin' ? 'role-admin' : 'role-member'}">${u.role === 'admin' ? 'Admin' : 'Membre'}</span>
+        <div style="display:flex;gap:4px;">
+          <button class="btn-sm" onclick='openEditUser(${JSON.stringify(u).replace(/'/g,"&#39;")})'>Modifier</button>
+          ${u.id != user?.id ? `<button class="btn-sm danger" onclick='confirmDeleteUser("${u.id}","${u.nom}")'>Supprimer</button>` : ''}
+        </div>
+      </div>
+    </div>`).join('');
+}
+function openMoAddUser() {
+  document.getElementById('u-id').value = ''; document.getElementById('u-nom').value = '';
+  document.getElementById('u-num').value = ''; document.getElementById('u-pwd').value = '';
+  document.getElementById('u-role').value = 'member';
+  document.getElementById('mo-user-title').textContent = 'Nouveau Membre';
+  document.getElementById('btn-u').textContent = 'Créer';
+  document.getElementById('mo-add-user').classList.add('open');
+}
+function openEditUser(u) {
+  document.getElementById('u-id').value = u.id || ''; document.getElementById('u-nom').value = u.nom || '';
+  document.getElementById('u-num').value = u.numero || ''; document.getElementById('u-pwd').value = '';
+  document.getElementById('u-role').value = u.role || 'member';
+  document.getElementById('mo-user-title').textContent = 'Modifier le Membre';
+  document.getElementById('btn-u').textContent = 'Enregistrer';
+  document.getElementById('mo-add-user').classList.add('open');
+}
+async function submitUser() {
+  if (user.role !== 'admin') { toast('Accès refusé', 'err'); return; }
+  const id = document.getElementById('u-id').value, nom = document.getElementById('u-nom').value.trim();
+  const num = document.getElementById('u-num').value.trim(), pwd = document.getElementById('u-pwd').value;
+  const role = document.getElementById('u-role').value;
+  if (!nom || !num) { toast('Nom et numéro sont obligatoires', 'err'); return; }
+  if (!id && !pwd) { toast('Mot de passe obligatoire pour un nouveau membre', 'err'); return; }
+  if (pwd && pwd.length < 6) { toast('Mot de passe : minimum 6 caractères', 'err'); return; }
+  const btn = document.getElementById('btn-u'); btn.disabled = true; btn.textContent = '…';
+  try {
+    const params = { action: id ? 'updateUser' : 'addUser', nom, numero:num, role };
+    if (id) params.id = id; if (pwd) params.password = pwd;
+    const r = await api(params);
+    if (r.success) { closeMo('mo-add-user'); toast(id ? 'Membre modifié !' : 'Membre ajouté !', 'ok'); loadUsers(); }
+    else toast('Erreur : ' + r.message, 'err');
+  } catch { toast('Erreur réseau', 'err'); }
+  btn.disabled = false; btn.textContent = id ? 'Enregistrer' : 'Créer';
+}
+function confirmDeleteUser(id, nom) {
+  if (user.role !== 'admin') return;
+  document.getElementById('confirm-title').textContent = 'Supprimer ce membre ?';
+  document.getElementById('confirm-msg').textContent = `Vous allez supprimer "${nom}". Cette action est irréversible.`;
+  document.getElementById('btn-confirm').onclick = async () => {
+    closeMo('mo-confirm');
+    const r = await api({ action:'deleteUser', id }).catch(() => null);
+    if (r?.success) { toast('Membre supprimé', 'ok'); loadUsers(); } else toast('Erreur : ' + (r?.message || 'inconnue'), 'err');
+  };
+  document.getElementById('mo-confirm').classList.add('open');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  PROFIL
+// ═══════════════════════════════════════════════════════════
+function loadProfile() {
+  document.getElementById('profile-av').textContent   = user.nom ? user.nom[0].toUpperCase() : '?';
+  document.getElementById('profile-name').textContent = user.nom || '—';
+  document.getElementById('profile-num').textContent  = user.numero || '—';
+  const rb = document.getElementById('profile-role');
+  rb.textContent = user.role === 'admin' ? 'Administrateur' : 'Membre';
+  rb.className = 'role-badge ' + (user.role === 'admin' ? 'role-admin' : 'role-member');
+  document.getElementById('p-nom').value = user.nom || '';
+  document.getElementById('p-num').value = user.numero || '';
+  document.getElementById('p-pwd').value = ''; document.getElementById('p-pwd2').value = '';
+}
+async function saveProfile() {
+  const nom = document.getElementById('p-nom').value.trim(), num = document.getElementById('p-num').value.trim();
+  const pwd = document.getElementById('p-pwd').value, pwd2 = document.getElementById('p-pwd2').value;
+  if (!nom || !num) { toast('Nom et numéro sont obligatoires', 'err'); return; }
+  if (pwd && pwd !== pwd2) { toast('Les mots de passe ne correspondent pas', 'err'); return; }
+  if (pwd && pwd.length < 6) { toast('Mot de passe : minimum 6 caractères', 'err'); return; }
+  try {
+    const params = { action:'updateUser', id:user.id, nom, numero:num, role:user.role };
+    if (pwd) params.password = pwd;
+    const r = await api(params);
+    if (r.success) {
+      user.nom = nom; user.numero = num;
+      const saved = JSON.parse(localStorage.getItem('ym_session') || '{}');
+      saved.user = user; localStorage.setItem('ym_session', JSON.stringify(saved));
+      document.getElementById('tb-av').textContent   = nom[0].toUpperCase();
+      document.getElementById('tb-name').textContent = nom;
+      loadProfile(); toast('Profil mis à jour !', 'ok');
+    } else toast('Erreur : ' + r.message, 'err');
+  } catch { toast('Erreur réseau', 'err'); }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  EXPORT
+// ═══════════════════════════════════════════════════════════
+function exportExcel() {
+  const filtered = getFiltered();
+  if (!filtered.length) { toast('Aucune transaction à exporter', 'err'); return; }
+  const header = ['#','Date','Objet','Versement (FCFA)','Dépense (FCFA)','Solde (FCFA)','Observation','Enregistré par'];
+  const rows = filtered.map((t, i) => [i+1, t.date, t.objet, +t.versement||0, +t.depense||0, +t.solde||0, t.observation||'', t.created_by||'']);
+  const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
+  ws['!cols'] = [{wch:5},{wch:13},{wch:28},{wch:18},{wch:16},{wch:18},{wch:24},{wch:20}];
+  const tv = filtered.reduce((s,t) => s+(+t.versement||0),0), td = filtered.reduce((s,t) => s+(+t.depense||0),0);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, biz.nom.substring(0,31));
+  const ws2 = XLSX.utils.aoa_to_sheet([['Business',biz.nom],['Période',(document.getElementById('f-deb').value||'Tout')+' → '+(document.getElementById('f-fin').value||'')],['Total versements',tv],['Total dépenses',td],['Bénéfice net',tv-td],['Transactions',filtered.length],['Export le',new Date().toLocaleString('fr-FR')]]);
+  ws2['!cols'] = [{wch:20},{wch:20}];
+  XLSX.utils.book_append_sheet(wb, ws2, 'Récapitulatif');
+  XLSX.writeFile(wb, `${biz.nom}_${new Date().toISOString().split('T')[0]}.xlsx`);
+  toast('Export Excel téléchargé !', 'ok');
+}
+function exportPDF() {
+  const filtered = getFiltered();
+  if (!filtered.length) { toast('Aucune transaction à exporter', 'err'); return; }
+  const deb = document.getElementById('f-deb').value, fin = document.getElementById('f-fin').value;
+  const tv = filtered.reduce((s,t) => s+(+t.versement||0),0), td = filtered.reduce((s,t) => s+(+t.depense||0),0);
+  const periode = deb||fin ? `${deb?'Du '+fmtD(deb):''} ${fin?'au '+fmtD(fin):''}`.trim() : 'Toutes les périodes';
+  const rows = filtered.map((t,i) => `<tr><td>${i+1}</td><td>${fmtD(t.date)}</td><td>${t.objet||'—'}</td><td style="color:#16a34a">${+t.versement>0?'+'+fmtM(t.versement):'—'}</td><td style="color:#dc2626">${+t.depense>0?'-'+fmtM(t.depense):'—'}</td><td style="font-weight:700;color:${t.solde<0?'#dc2626':'#b8960c'}">${fmtM(t.solde)}</td><td>${t.observation||'—'}</td></tr>`).join('');
+  const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Relevé — ${biz.nom}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Outfit:wght@400;600&display=swap" rel="stylesheet">
+  <style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Outfit',sans-serif;color:#1a1710;background:#fff;padding:32px 40px;font-size:12px;}.header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;padding-bottom:16px;border-bottom:2px solid #b8960c;}.logo{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700;}.logo em{color:#b8960c;font-style:italic;}.meta{text-align:right;}.meta .biz{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;}.meta .per{font-size:11px;color:#9a8e72;margin-top:2px;}.stats{display:flex;gap:14px;margin-bottom:22px;}.stat{flex:1;background:#faf8f3;border:1px solid rgba(180,150,60,.2);border-radius:8px;padding:12px 14px;}.stat-l{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#9a8e72;margin-bottom:4px;font-weight:600;}.stat-v{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;}.stat-v.g{color:#16a34a}.stat-v.r{color:#dc2626}.stat-v.o{color:#b8960c}table{width:100%;border-collapse:collapse;font-size:11px;}thead{background:#b8960c;}th{color:#fff;padding:9px 10px;text-align:left;font-weight:600;letter-spacing:.06em;font-size:10px;}td{padding:8px 10px;border-bottom:1px solid rgba(180,150,60,.1);}tr:nth-child(even) td{background:#faf8f3;}.footer{margin-top:20px;text-align:center;font-size:9px;color:#9a8e72;letter-spacing:.08em;}</style></head><body>
+  <div class="header"><div class="logo">Yao<em>&#8209;</em>Manager</div><div class="meta"><div class="biz">${biz.nom}</div><div class="per">${periode} · ${filtered.length} transaction${filtered.length>1?'s':''}</div></div></div>
+  <div class="stats"><div class="stat"><div class="stat-l">Versements</div><div class="stat-v g">${fmtM(tv)}</div></div><div class="stat"><div class="stat-l">Dépenses</div><div class="stat-v r">${fmtM(td)}</div></div><div class="stat"><div class="stat-l">Bénéfice net</div><div class="stat-v o">${fmtM(tv-td)}</div></div></div>
+  <table><thead><tr><th>#</th><th>Date</th><th>Objet</th><th>Versement</th><th>Dépense</th><th>Solde</th><th>Observation</th></tr></thead><tbody>${rows}</tbody></table>
+  <div class="footer">Généré le ${new Date().toLocaleString('fr-FR')} · Yao-Manager — Confidentiel</div>
+  <script>window.onload=()=>window.print();<\/script></body></html>`;
+  const win = window.open('', '_blank');
+  if (win) { win.document.write(html); win.document.close(); } else toast("Autorisez les popups pour l'export PDF", 'err');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════════════════
+function closeMo(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.mo-ov').forEach(ov => ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('open'); }));
+
+async function api(params) {
+  params.session_token = sessionToken;
+  const r = await fetch(API_URL + '?' + new URLSearchParams(params));
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const text = await r.text();
+  let data;
+  try { data = JSON.parse(text); } catch { throw new Error('Réponse invalide'); }
+  if (!data.success && data.code === 'SESSION_EXPIRED') { showSessionExpired(); throw new Error('Session expirée'); }
+  return data;
+}
+async function apiRaw(params) {
+  const r = await fetch(API_URL + '?' + new URLSearchParams(params));
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const text = await r.text();
+  try { return JSON.parse(text); } catch { throw new Error('Réponse invalide'); }
+}
+
+function fmtM(n) { return new Intl.NumberFormat('fr-FR').format(parseFloat(n) || 0) + ' FCFA'; }
+function fmtShort(n) { const v = Math.abs(parseFloat(n)||0), s = n < 0 ? '-' : ''; if (v >= 1e6) return s+(v/1e6).toFixed(1)+'M'; if (v >= 1e3) return s+(v/1e3).toFixed(0)+'K'; return s+v; }
+function fmtD(d, short = false) { if (!d) return '—'; try { return new Date(d+'T00:00:00').toLocaleDateString('fr-FR', short ? {day:'2-digit',month:'short'} : {day:'2-digit',month:'short',year:'numeric'}); } catch { return d; } }
+function toast(msg, type = '') {
+  const t = document.getElementById('toast');
+  const ic = { ok:`<svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#16a34a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`, err:`<svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#dc2626" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>` };
+  t.innerHTML = (ic[type] || '') + msg; t.className = 'toast show' + (type ? ' ' + type : '');
+  clearTimeout(t._t); t._t = setTimeout(() => t.className = 'toast', 3800);
+}
+</script>
+</body>
+</html>
